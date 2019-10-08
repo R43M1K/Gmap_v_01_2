@@ -1,0 +1,3 @@
+40.179937,44.514450,525, D:\Android\Gmap_v_01\app\src\main\res\drawable\babydriver
+40.179975,44.514425,1250, D:\Android\Gmap_v_01\app\src\main\res\drawable\subik
+40.179854,44.514400,11365, D:\Android\Gmap_v_01\app\src\main\res\drawable\babydriver

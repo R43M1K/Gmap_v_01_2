@@ -1,0 +1,2 @@
+include ':app'
+rootProject.name='Gmap_v_01_2'
