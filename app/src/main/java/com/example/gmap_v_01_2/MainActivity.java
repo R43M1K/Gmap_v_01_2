@@ -17,14 +17,14 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.widget.Toast;
 
-import com.example.gmap_v_01_2.Checker.CheckerV;
-import com.example.gmap_v_01_2.Fragments.FrontMap;
+import com.example.gmap_v_01_2.checker.CheckerV;
+import com.example.gmap_v_01_2.fragments.FrontMapFragment;
+import com.google.android.gms.location.FusedLocationProviderClient;
 
 
-public class MainActivity extends AppCompatActivity implements FrontMap.OnFragmentInteractionListener {
+public class MainActivity extends AppCompatActivity implements FrontMapFragment.OnFragmentInteractionListener {
 
-    CheckerV checker = new CheckerV();
-    Fragment fragment = new FrontMap();
+    Fragment fragment = new FrontMapFragment();
 
     //PERMISSIONS
     final int PERMISSION_REQUEST_ENABLE_GPS = 9000;
@@ -32,6 +32,7 @@ public class MainActivity extends AppCompatActivity implements FrontMap.OnFragme
     private static final String COARSE_LOCATION = Manifest.permission.ACCESS_COARSE_LOCATION;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1234;
     private Boolean mLocationPermissionsGranted = false;
+    private FusedLocationProviderClient mFusedLocationProviderClient;
 
 
     @Override
@@ -50,16 +51,16 @@ public class MainActivity extends AppCompatActivity implements FrontMap.OnFragme
 
     //CHECK GOOGLEPLAYS,GPS,INTERNET
     private boolean checkConnections(){
-        if(!checker.checkGPS(this)){
+        if(!CheckerV.checkGPS(this)){
             Toast.makeText(this,"GPS DISABLED",Toast.LENGTH_SHORT).show();
         }
-        if(!checker.checkINTERNET(this)){
+        if(!CheckerV.checkINTERNET(this)){
             Toast.makeText(this,"INTERNET DISABLED", Toast.LENGTH_SHORT).show();
         }
-        if(!checker.checkServices(this)){
+        if(!CheckerV.checkServices(this)){
             Toast.makeText(this,"GOOGLEPLAY SERVICES ERROR",Toast.LENGTH_SHORT).show();
         }
-        return (checker.checkINTERNET(this) && checker.checkGPS(this) && checker.checkServices(this));
+        return (CheckerV.checkINTERNET(this) && CheckerV.checkGPS(this) && CheckerV.checkServices(this));
     }
 
     //CHECK PERMISSION FOR LOCATION GOOGLE MAP
@@ -114,7 +115,7 @@ public class MainActivity extends AppCompatActivity implements FrontMap.OnFragme
     }
 
 
-    //ADD FRAGMENT TO ACITIVITY
+    //ADD FRAGMENT TO ACTIVITY
     private void callFragment(){
 
         FragmentManager fragmentManager = getSupportFragmentManager();
@@ -130,7 +131,7 @@ public class MainActivity extends AppCompatActivity implements FrontMap.OnFragme
     @Override
     public void onFragmentInteraction(Boolean bool) {
 
-        if((checker.checkINTERNET(this) && checker.checkGPS(this) && checker.checkServices(this))){
+        if((CheckerV.checkINTERNET(this) && CheckerV.checkGPS(this) && CheckerV.checkServices(this))){
             FragmentManager fragmentManager = getSupportFragmentManager();
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
             fragmentTransaction.hide(fragment);
@@ -139,13 +140,12 @@ public class MainActivity extends AppCompatActivity implements FrontMap.OnFragme
             Intent intent = new Intent(MainActivity.this,MapActivity.class);
             startActivity(intent);
         }else{
-           if(!checker.checkGPS(this)){
+           if(!CheckerV.checkGPS(this)){
                buildAlertMessagesNoGPS();
-           }else if(!checker.checkINTERNET(this)){
+           }else if(!CheckerV.checkINTERNET(this)){
                Toast.makeText(this,"No Internet Connection",Toast.LENGTH_SHORT).show();
            }
         }
     }
-
 
 }

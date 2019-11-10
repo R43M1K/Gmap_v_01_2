@@ -7,7 +7,7 @@
     android:animationCache="true"
     android:background="@drawable/background"
     android:visibility="visible"
-    tools:context=".Fragments.FrontMap">
+    tools:context=".fragments.FrontMapFragment">
 
     <Button
         android:id="@+id/reload"

@@ -1,4 +1,4 @@
-package com.example.gmap_v_01_2.Editor;
+package com.example.gmap_v_01_2.editor;
 
 public class FollowerProcessing {
 
@@ -36,6 +36,7 @@ public class FollowerProcessing {
     }
 
     // RESIZE USER IMAGE DEPENDING ON AMOUNT OF INSTAGRAM FOLLOWERS
+    //TODO String.format
     public int[] picSizeViaFollower(int followers){
 
         int[] userPicWidthHeight = {110,150};

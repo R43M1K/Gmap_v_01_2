@@ -1,4 +1,4 @@
-package com.example.gmap_v_01_2.Reader;
+package com.example.gmap_v_01_2.reader;
 
 import android.content.Context;
 import android.content.res.AssetManager;
