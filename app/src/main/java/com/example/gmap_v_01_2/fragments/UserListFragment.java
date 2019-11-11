@@ -31,9 +31,6 @@ public class UserListFragment extends Fragment {
     private GestureDetector gestureDetector;
     private ItemTouchHelper itemTouchHelper;
     private String action = "";
-    private List<String> username = new ArrayList<>();
-    private List<String> userpic = new ArrayList<>();
-    private List<String> userfols = new ArrayList<>();
 
     //RecyclerView classes
     private RecyclerView mRecyclerView;
@@ -76,12 +73,20 @@ public class UserListFragment extends Fragment {
         final View view = inflater.inflate(R.layout.fragment_user_list, container, false);
         useritemsList.clear();
         //Get Parameters from Activity
-        username = getArguments().getStringArrayList("username");
-        userpic = getArguments().getStringArrayList("userpicture");
-        userfols = getArguments().getStringArrayList("userfollowers");
-        for(int i=0; i<username.size(); i++){
-            useritemsList.add(new User_Item(userpic.get(i),username.get(i),userfols.get(i)));
+        Bundle arguments = getArguments();
+
+        if (arguments != null) {
+            List<String> username = arguments.getStringArrayList("username");
+            List<String> userpic = arguments.getStringArrayList("userpicture");
+            List<String> userfols = arguments.getStringArrayList("userfollowers");
+
+            if(userfols != null && userpic != null && username != null) {
+                for(int i = 0; i < username.size(); i++)
+                    useritemsList.add(new User_Item(userpic.get(i), username.get(i), userfols.get(i)));
+            }
+
         }
+
         //Initialize RecyclerView
         mRecyclerView = view.findViewById(R.id.recyclerView);
         mRecyclerView.setHasFixedSize(true);
@@ -104,30 +109,28 @@ public class UserListFragment extends Fragment {
         });
 
         gestureDetector = new GestureDetector(getActivity(), new GestureListener());
-        view.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                gestureDetector.onTouchEvent(event);
-                Log.d("TAG","Clicked on RecyclerView");
-                // action String is defining which gesture is used
-                // here we only check from Right to Left swipe gesture on Fragment
-                // then give action string an default value as empty string, so it will be reset and will wait for more gestures
-                // we also send TRUE condition to onFragmentInteraction which is sending TRUE value to its activity in same name method
-                if(action.equals("rightToLeft")){
-                    action = "";
-                    mListener.onFragmentInteraction(true,false,0);
-                }else if(action.equals("leftToRight")){
-                    action = "";
-                    mListener.onFragmentInteraction(false,true,0);
-                }
-                return true;
+
+        mRecyclerView.setOnTouchListener((v, event) -> {
+            gestureDetector.onTouchEvent(event);
+            Log.d("TAG","Clicked on RecyclerView");
+            // action String is defining which gesture is used
+            // here we only check from Right to Left swipe gesture on Fragment
+            // then give action string an default value as empty string, so it will be reset and will wait for more gestures
+            // we also send TRUE condition to onFragmentInteraction which is sending TRUE value to its activity in same name method
+            if(action.equals("rightToLeft")){
+                action = "";
+                mListener.onFragmentInteraction(true,false,0);
+            }else if(action.equals("leftToRight")){
+                action = "";
+                mListener.onFragmentInteraction(false,true,0);
             }
+            return true;
         });
         return view;
     }
 
     @Override
-    public void onAttach(Context context) {
+    public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         if (context instanceof OnFragmentInteractionListener) {
             mListener = (OnFragmentInteractionListener) context;

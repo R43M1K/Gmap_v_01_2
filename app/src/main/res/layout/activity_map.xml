@@ -40,7 +40,7 @@
         android:layout_marginTop="5dp"
         android:layout_height="59dp"
         android:layout_alignRight="@id/map"
-        android:tooltipText="Open User List"
-        android:background="@drawable/userlist" />
+        android:tooltipText="Open User List"/>
+        <!--android:background="@drawable/userlist"-->
 
 </RelativeLayout>
