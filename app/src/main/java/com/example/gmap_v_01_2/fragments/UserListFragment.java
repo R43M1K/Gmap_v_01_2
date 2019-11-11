@@ -9,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 
 import androidx.annotation.NonNull;
@@ -98,6 +99,7 @@ public class UserListFragment extends Fragment {
             @Override
             public void onItemClick(int position) {
                 //This is if user clicked on whole line of RecyclerViews line in position "position"
+                System.out.println("a");
             }
 
             @Override
@@ -108,23 +110,18 @@ public class UserListFragment extends Fragment {
             }
         });
 
+        FrameLayout topLayerInterceptorView = view.findViewById(R.id.top_layer_view);
+
         gestureDetector = new GestureDetector(getActivity(), new GestureListener());
 
-        mRecyclerView.setOnTouchListener((v, event) -> {
-            gestureDetector.onTouchEvent(event);
+        topLayerInterceptorView.setOnTouchListener((v, event) -> {
             Log.d("TAG","Clicked on RecyclerView");
             // action String is defining which gesture is used
             // here we only check from Right to Left swipe gesture on Fragment
             // then give action string an default value as empty string, so it will be reset and will wait for more gestures
             // we also send TRUE condition to onFragmentInteraction which is sending TRUE value to its activity in same name method
-            if(action.equals("rightToLeft")){
-                action = "";
-                mListener.onFragmentInteraction(true,false,0);
-            }else if(action.equals("leftToRight")){
-                action = "";
-                mListener.onFragmentInteraction(false,true,0);
-            }
-            return true;
+
+            return gestureDetector.onTouchEvent(event);
         });
         return view;
     }
@@ -156,6 +153,16 @@ public class UserListFragment extends Fragment {
         final int SWIPE_MAX_OFF_PATH = 250;
         final int SWIPE_THRESHOLD_VELOCITY = 200;
 
+        @Override
+        public void onLongPress(MotionEvent e) {
+            super.onLongPress(e);
+        }
+
+        @Override
+        public boolean onDown(MotionEvent e) {
+            return super.onDown(e);
+        }
+
         //ADD METHOD FOR DOUBLE TAP INDICATION
         @Override
         public boolean onDoubleTap(MotionEvent e) {
@@ -178,5 +185,7 @@ public class UserListFragment extends Fragment {
             }
             return true;
         }
+
+
     }
 }
