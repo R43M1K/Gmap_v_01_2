@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.gmap_v_01_2.OnSwipeTouchListener;
 import com.example.gmap_v_01_2.R;
 import com.example.gmap_v_01_2.recyclerview.UserAdapter;
 import com.example.gmap_v_01_2.recyclerview.User_Item;
@@ -99,7 +100,7 @@ public class UserListFragment extends Fragment {
             @Override
             public void onItemClick(int position) {
                 //This is if user clicked on whole line of RecyclerViews line in position "position"
-                System.out.println("a");
+                Log.d("recycler item click: ", "item clicked by position: " + position);
             }
 
             @Override
@@ -110,19 +111,18 @@ public class UserListFragment extends Fragment {
             }
         });
 
-        FrameLayout topLayerInterceptorView = view.findViewById(R.id.top_layer_view);
+        mRecyclerView.setOnTouchListener(new OnSwipeTouchListener(this.getContext()) {
+            @Override
+            public void onSwipeRight() {
+                Log.d("touch event: ", "swiped to right");
+            }
 
-        gestureDetector = new GestureDetector(getActivity(), new GestureListener());
-
-        topLayerInterceptorView.setOnTouchListener((v, event) -> {
-            Log.d("TAG","Clicked on RecyclerView");
-            // action String is defining which gesture is used
-            // here we only check from Right to Left swipe gesture on Fragment
-            // then give action string an default value as empty string, so it will be reset and will wait for more gestures
-            // we also send TRUE condition to onFragmentInteraction which is sending TRUE value to its activity in same name method
-
-            return gestureDetector.onTouchEvent(event);
+            @Override
+            public void onSwipeLeft() {
+                Log.d("touch event: ", "swiped to left");
+            }
         });
+
         return view;
     }
 
