@@ -18,29 +18,12 @@ import com.example.gmap_v_01_2.R;
 
 public class FrontMapFragment extends Fragment{
 
-    private static final String ARG_PARAM1 = "param1";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-
     private OnFragmentInteractionListener mListener;
     Button button;
-
-    // TODO: Rename and change types and number of parameters
-    public static FrontMapFragment newInstance(String param1) {
-        FrontMapFragment fragment = new FrontMapFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        fragment.setArguments(args);
-        return fragment;
-    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-        }
     }
 
     @Override

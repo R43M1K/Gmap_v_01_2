@@ -12,9 +12,7 @@ import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.view.MotionEvent;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.Switch;
@@ -28,7 +26,6 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.gmap_v_01_2.editor.BoundProcessing;
 import com.example.gmap_v_01_2.editor.FollowerProcessing;
@@ -36,7 +33,6 @@ import com.example.gmap_v_01_2.editor.ImageProcessing;
 import com.example.gmap_v_01_2.editor.ImageURLProcessing;
 import com.example.gmap_v_01_2.fragments.UserListFragment;
 import com.example.gmap_v_01_2.fragments.UserPhotoViewerFragment;
-import com.example.gmap_v_01_2.recyclerview.User_Item;
 import com.example.gmap_v_01_2.services.LocationService;
 import com.example.gmap_v_01_2.model.users.UserDocument;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -122,7 +118,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     //CHECK PERMISSION FOR LOCATION GOOGLE MAP
-    private void getLocationPermission() {
+   private void getLocationPermission() {
         String[] permissions = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
 
         if (ContextCompat.checkSelfPermission(this.getApplicationContext(), FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
