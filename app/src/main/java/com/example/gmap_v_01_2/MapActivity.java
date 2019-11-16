@@ -3,12 +3,9 @@ package com.example.gmap_v_01_2;
 
 import android.Manifest;
 import android.app.ActivityManager;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -37,7 +34,6 @@ import com.example.gmap_v_01_2.services.LocationService;
 import com.example.gmap_v_01_2.model.users.UserDocument;
 import com.example.gmap_v_01_2.utilities.ReadWritePrefs;
 import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -45,10 +41,8 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -193,7 +187,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     @Override
                     public void onSuccess(DocumentReference documentReference) {
                         String documentID = documentReference.getId();
-                        readWritePrefs.saveData(documentID);
+                        readWritePrefs.writeData(documentID);
                         addMarker(link, username, location, followers, visible, true);
                         Toast.makeText(MapActivity.this, "Your location added to server" + documentID, Toast.LENGTH_SHORT).show();
                     }
@@ -246,7 +240,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                             if (username.equals(localUsername)) {
                                 intArr[i] = 1;
                                 documentID = documents.get(i).getId();
-                                readWritePrefs.saveData(documentID);
+                                readWritePrefs.writeData(documentID);
                             } else {
                                 intArr[i] = -1;
                             }
