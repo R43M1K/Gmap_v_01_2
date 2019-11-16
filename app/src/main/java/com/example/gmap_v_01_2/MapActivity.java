@@ -32,6 +32,7 @@ import com.example.gmap_v_01_2.fragments.UserListFragment;
 import com.example.gmap_v_01_2.fragments.UserPhotoViewerFragment;
 import com.example.gmap_v_01_2.services.LocationService;
 import com.example.gmap_v_01_2.model.users.UserDocument;
+import com.example.gmap_v_01_2.services.preferencies.DefaultPreferencesService;
 import com.example.gmap_v_01_2.utilities.ReadWritePrefs;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -97,7 +98,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     FirebaseFirestore db = FirebaseFirestore.getInstance();
     Fragment fragment = new UserListFragment();
     Fragment photoFragment = new UserPhotoViewerFragment();
-    ReadWritePrefs readWritePrefs = new ReadWritePrefs(MapActivity.this);
+    ReadWritePrefs readWritePrefs;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -105,6 +106,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         setContentView(R.layout.activity_map);
 
         getLocationPermission();
+        readWritePrefs = new ReadWritePrefs(new DefaultPreferencesService(getBaseContext()));
     }
 
 
@@ -183,14 +185,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         db.collection("userinfo")
                 .add(userR)
-                .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
-                    @Override
-                    public void onSuccess(DocumentReference documentReference) {
-                        String documentID = documentReference.getId();
-                        readWritePrefs.writeData(documentID);
-                        addMarker(link, username, location, followers, visible, true);
-                        Toast.makeText(MapActivity.this, "Your location added to server" + documentID, Toast.LENGTH_SHORT).show();
-                    }
+                .addOnSuccessListener(documentReference -> {
+                    String documentID = documentReference.getId();
+                    readWritePrefs.writeData(documentID);
+                    addMarker(link, username, location, followers, visible, true);
+                    Toast.makeText(MapActivity.this, "Your location added to server" + documentID, Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
