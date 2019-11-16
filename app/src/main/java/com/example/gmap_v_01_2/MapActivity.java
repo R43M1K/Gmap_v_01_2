@@ -35,6 +35,7 @@ import com.example.gmap_v_01_2.fragments.UserListFragment;
 import com.example.gmap_v_01_2.fragments.UserPhotoViewerFragment;
 import com.example.gmap_v_01_2.services.LocationService;
 import com.example.gmap_v_01_2.model.users.UserDocument;
+import com.example.gmap_v_01_2.utilities.ReadWritePrefs;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -70,6 +71,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private static final int LOCATION_UPDATE_INTERVAL = 3000;
 
     //vars
+    private String localusername = "babydriver";
     private GoogleMap mMap;
     private Boolean mLocationPermissionsGranted = false;
     private FusedLocationProviderClient mFusedLocationProviderClient;
@@ -101,6 +103,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     FirebaseFirestore db = FirebaseFirestore.getInstance();
     Fragment fragment = new UserListFragment();
     Fragment photoFragment = new UserPhotoViewerFragment();
+    ReadWritePrefs readWritePrefs = new ReadWritePrefs(MapActivity.this);
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -163,63 +166,20 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         Toast.makeText(this, "Map is ready", Toast.LENGTH_SHORT).show();
-        getDeviceLocation(mMap);
+        readDocFromFirebase(localusername);
     }
 
 
-    //GET USER LOCATION FROM GPS, WRITE LOCATION DATA TO DOCUMENT
-    public void getDeviceLocation(GoogleMap googleMap) {
-        mMap = googleMap;
-        mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
-        try {
-            Task<Location> location = mFusedLocationProviderClient.getLastLocation();
-            location.addOnCompleteListener(new OnCompleteListener<Location>() {
-                public void onComplete(@NonNull Task task) {
-                    if (task.isSuccessful()) {
 
-                        String drawableFolderName = "drawable";
-                        //PLACE HERE READ USER PROFILE PICTURE FROM INSTAGRAM
-                        //TODO get dir from context(maybe)
-                        String papka = "D:\\Android\\Gmap_v_01\\app\\src\\main\\res\\drawable\\babydriver";
-                        Location currentLocation = (Location) task.getResult();
-                        if ((currentLocation != null)) {
-
-                            latitude = currentLocation.getLatitude();
-                            longitude = currentLocation.getLongitude();
-                            geo_point = new GeoPoint(latitude, longitude);
-
-                            //PLACE HERE READ USER FOLLOWERS FROM INSTAGRAM
-
-                            int indexofDrawable = papka.indexOf("drawable") + drawableFolderName.length() + 1; // Get profile pic position from path
-                            String profileImg = papka.substring(indexofDrawable); // Get profile pic name from it's position
-                            int picture = getResources().getIdentifier(profileImg, "drawable", getPackageName()); // Get ID of drawable profile pic name
-
-                            //READ USER INFO FROM DATABASE , IF NOT FOUND USER ,REGISTER USER TO DATABASE
-                            readDocFromFirebase(profileImg);
-
-                        } else {
-                            Toast.makeText(MapActivity.this, "Cant Find your location", Toast.LENGTH_SHORT).show();
-                        }
-
-
-                    } else {
-                        Toast.makeText(MapActivity.this, "task was not successful", Toast.LENGTH_SHORT).show();
-                    }
-                }
-            });
-        } catch (SecurityException e) {
-        }
-
-    }
 
     //ADD USER INFORMATION TO DOCUMENT , ALSO GENERATE DOCUMENT FOR USER
     private void registerUserToFirebase(GeoPoint geoPoint) {
 
-        final String usernameR = "babydriver";
-        final GeoPoint locationR = geoPoint;
-        final String linkR = "https://image.freepik.com/free-vector/abstract-dynamic-pattern-wallpaper-vector_53876-59131.jpg";
-        final int followersR = 45;
-        final boolean visibleR = true;
+        final String username = "babydriver";
+        final GeoPoint location = geoPoint;
+        final String link = "https://image.freepik.com/free-vector/abstract-dynamic-pattern-wallpaper-vector_53876-59131.jpg";
+        final int followers = 45;
+        final boolean visible = true;
         final Map<String, Object> userR = new HashMap<>();
         userR.put("username", username);
         userR.put("location", location);
@@ -233,8 +193,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     @Override
                     public void onSuccess(DocumentReference documentReference) {
                         String documentID = documentReference.getId();
-                        saveData(documentID);
-                        addMarker(linkR, usernameR, locationR, followersR, visibleR, true);
+                        readWritePrefs.saveData(documentID);
+                        addMarker(link, username, location, followers, visible, true);
                         Toast.makeText(MapActivity.this, "Your location added to server" + documentID, Toast.LENGTH_SHORT).show();
                     }
                 })
@@ -258,7 +218,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 if (!queryDocumentSnapshots.isEmpty()) {
 
                     documents = queryDocumentSnapshots.getDocuments(); // Get all documents from collection
-                    documentID = readData(); // Read logged in users Document ID, stored in shared prefereances in phone
+                    documentID = readWritePrefs.readData(); // Read logged in users Document ID, stored in shared prefereances in phone
                     Integer[] intArr = new Integer[documents.size()]; // Loop thru all docuemnts from collection
 
                     //PLACE HERE READ USER PROFILE PICTURE FROM INSTAGRAM
@@ -286,7 +246,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                             if (username.equals(localUsername)) {
                                 intArr[i] = 1;
                                 documentID = documents.get(i).getId();
-                                saveData(documentID);
+                                readWritePrefs.saveData(documentID);
                             } else {
                                 intArr[i] = -1;
                             }
@@ -324,25 +284,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     }
 
-    private void saveData(String string) {
-
-        SharedPreferences sharedPreferences = this.getPreferences(Context.MODE_PRIVATE); // Make cookie with private only this application access
-        SharedPreferences.Editor editor = sharedPreferences.edit(); // Open editor for cookie
-        editor.putString(getString(R.string.userDocID), string); // Write "string" to R.string.userDocID string file from strings.xml
-        editor.apply();
-
-    }
-
-    public String readData() {
-
-        SharedPreferences sharedPreferences = this.getPreferences(Context.MODE_PRIVATE); // Make cookie with private only this application access
-        try {
-            return sharedPreferences.getString(getString(R.string.userDocID), "User Cookies are not found"); // return string value from userDocID string in strings.xml, otherwise return "User Cookies are not found"
-        } catch (Exception e) {
-            return null;
-        }
-
-    }
 
     //ADD MARKER TO MAP AND SEND USER PARAMS TO FRAGMENT
     private void addMarker(String urllink, String userName, GeoPoint location, int followers, boolean visible, boolean movecamera) {

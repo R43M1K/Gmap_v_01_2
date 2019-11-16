@@ -9,7 +9,7 @@
     <RelativeLayout
         android:id="@+id/relative_list"
         android:layout_width="match_parent"
-        android:layout_height="1000dp"
+        android:layout_height="50dp"
         android:layout_margin="4dp">
 
         <ImageView
