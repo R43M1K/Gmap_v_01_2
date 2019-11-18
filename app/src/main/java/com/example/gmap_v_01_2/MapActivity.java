@@ -106,7 +106,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         setContentView(R.layout.activity_map);
 
         getLocationPermission();
-        readWritePrefs = new ReadWritePrefs(new DefaultPreferencesService(getBaseContext()));
+        readWritePrefs = new ReadWritePrefs (DefaultPreferencesService.getInstance(getBaseContext()));
     }
 
 
@@ -279,7 +279,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
 
     //ADD MARKER TO MAP AND SEND USER PARAMS TO FRAGMENT
-    private void addMarker(String urllink, String userName, GeoPoint location, int followers, boolean visible, boolean movecamera) {
+    private void addMarker(String urllink, String userName, @Nullable GeoPoint location, int followers, boolean visible, boolean movecamera) {
 
         if (visible) {
             ImageURLProcessing imageURLProcessing = new ImageURLProcessing();
@@ -295,7 +295,13 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 userListFragmentBitmap = imageProcessing.getCroppedBitmap(imageProcessing.getResizedBitmapForUserListFragment(bitmap)); // Make current bitmap for userlist fragment type
                 String userPictureString = imageProcessing.bitmapToString(userListFragmentBitmap); //Convert bitmap to String to send to fragment as param
                 String fullPictureString = imageProcessing.bitmapToString(bitmap);
-                LatLng userLongLat = new LatLng(location.getLatitude(), location.getLongitude());
+
+                //TODO read current location data from shared prefs
+                LatLng userLongLat = new LatLng(1, 1);
+
+                if (location != null) {
+                    userLongLat = new LatLng(location.getLatitude(), location.getLongitude());
+                }
                 markerOptions.position(userLongLat);
                 markerOptions.icon(BitmapDescriptorFactory.fromBitmap(roundBitMap));
                 String userFollowers = followersProcessing.instagramFollowersType(followers);

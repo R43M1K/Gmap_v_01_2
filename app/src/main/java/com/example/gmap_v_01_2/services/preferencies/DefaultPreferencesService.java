@@ -4,15 +4,28 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 
-public class DefaultPreferencesService implements PreferencesService {
+public final class DefaultPreferencesService implements PreferencesService {
+
+    private static DefaultPreferencesService INSTANCE = null;
+
+    public static DefaultPreferencesService getInstance(Context context) {
+        if (INSTANCE == null) {
+            synchronized (DefaultPreferencesService.class) {
+                if (INSTANCE == null) {
+                    INSTANCE = new DefaultPreferencesService(context);
+                }
+            }
+        }
+
+        return INSTANCE;
+    }
 
     private static final String TAG = DefaultPreferencesService.class.getSimpleName();
     private SharedPreferences sharedPreferences;
 
-    public DefaultPreferencesService(Context context) {
+    private DefaultPreferencesService(Context context) {
         sharedPreferences = context.getSharedPreferences(context.getPackageName(), Context.MODE_PRIVATE);
     }
-
 
     @Override
     public <T> void put(String key, T value) {
