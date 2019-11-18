@@ -201,6 +201,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     //USE THIS METHOD TO GET ALL USERS INFORMATION, THEN ADD MARKERS IN CURRENT AREA
+    //TODO move firebase read/write operations to service
     private void readDocFromFirebase(final String localUsername) {
 
         visibleChecker();
