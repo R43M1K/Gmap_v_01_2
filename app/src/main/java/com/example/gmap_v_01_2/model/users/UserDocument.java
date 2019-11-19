@@ -6,19 +6,28 @@ public class UserDocument {
     //USE THIS CLASS AS A DOCUMENT, INCLUDED VALUES ARE PARAMETERS FROM COLLECTION DOCUMENT userinfo
     //WRITE DOCUMENT WITH THIS PARAMETERS IN THIS CLASS. LATER USE THIS CLASS GETTERS TO READ DATA
 
+    private static UserDocument INSTANCE = null;
     private String username;
     private GeoPoint location;
     private String picture;
     private int followers;
     private boolean visible;
 
-    public UserDocument(String username, GeoPoint location, String picture, int followers, boolean visible) {
-        this.username = username;
-        this.location = location;
-        this.picture = picture;
-        this.followers = followers;
-        this.visible = visible;
+    public static UserDocument getInstance() {
+        if(INSTANCE == null) {
+            synchronized (UserDocument.class) {
+                if(INSTANCE == null) {
+                    INSTANCE = new UserDocument();
+                }
+            }
+        }
+        return INSTANCE;
     }
+
+    private UserDocument() {
+
+    }
+
 
     public int getFollowers() {
         return followers;
@@ -34,10 +43,6 @@ public class UserDocument {
 
     public void setVisible(boolean visible) {
         this.visible = visible;
-    }
-
-    public UserDocument() {
-
     }
 
     public String getPicture() {

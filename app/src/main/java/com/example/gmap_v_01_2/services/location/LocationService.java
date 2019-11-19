@@ -1,4 +1,4 @@
-package com.example.gmap_v_01_2.services;
+package com.example.gmap_v_01_2.services.location;
 
 import android.Manifest;
 import android.app.Notification;
@@ -7,21 +7,19 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.Looper;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 
-import com.example.gmap_v_01_2.MapActivity;
 import com.example.gmap_v_01_2.model.users.UserDocument;
+import com.example.gmap_v_01_2.services.preferencies.DefaultPreferencesService;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -38,6 +36,9 @@ import java.util.Map;
 public class LocationService extends Service {
 
     private FusedLocationProviderClient fusedLocationProviderClient;
+    private DefaultPreferencesService defaultPreferencesService;
+    private static final String SHARED_LONGITUDE = "Longitude";
+    private static final String SHARED_LATITUDE = "Latitude";
     private final static long UPDATE_INTERVAL = 4 * 1000; // 4 seconds
     private final static long FASTEST_INTERVAL = 2 * 1000; // 2 seconds
 
@@ -54,6 +55,7 @@ public class LocationService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        defaultPreferencesService = DefaultPreferencesService.getInstance(getApplicationContext());
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         if (Build.VERSION.SDK_INT >= 26) {
@@ -91,7 +93,9 @@ public class LocationService extends Service {
                 Location location = locationResult.getLastLocation();
                 if (location != null) {
                     GeoPoint geoPoint = new GeoPoint(location.getLatitude(), location.getLongitude());
-                    UserDocument userDocument = new UserDocument();
+                    defaultPreferencesService.put(SHARED_LONGITUDE, String.valueOf(location.getLongitude()));
+                    defaultPreferencesService.put(SHARED_LATITUDE, String.valueOf(location.getLatitude()));
+                    UserDocument userDocument = UserDocument.getInstance();
                     userDocument.setPicture(link);
                     userDocument.setUsername(username);
                     userDocument.setLocation(geoPoint);

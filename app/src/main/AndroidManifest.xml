@@ -31,7 +31,7 @@
         </activity>
         <activity android:name=".MapActivity"/>
 
-        <service android:name=".services.LocationService"
+        <service android:name=".services.location.LocationService"
             android:stopWithTask="true"/>
     </application>
 

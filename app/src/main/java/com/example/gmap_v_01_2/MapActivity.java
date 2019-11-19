@@ -23,17 +23,16 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
-
 import com.example.gmap_v_01_2.editor.BoundProcessing;
 import com.example.gmap_v_01_2.editor.FollowerProcessing;
 import com.example.gmap_v_01_2.editor.ImageProcessing;
 import com.example.gmap_v_01_2.editor.ImageURLProcessing;
 import com.example.gmap_v_01_2.fragments.UserListFragment;
 import com.example.gmap_v_01_2.fragments.UserPhotoViewerFragment;
-import com.example.gmap_v_01_2.services.LocationService;
+import com.example.gmap_v_01_2.services.firestore.UserFirestoreService;
+import com.example.gmap_v_01_2.services.location.LocationService;
 import com.example.gmap_v_01_2.model.users.UserDocument;
 import com.example.gmap_v_01_2.services.preferencies.DefaultPreferencesService;
-import com.example.gmap_v_01_2.utilities.ReadWritePrefs;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -44,7 +43,6 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
@@ -66,7 +64,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private static final int LOCATION_UPDATE_INTERVAL = 3000;
 
     //vars
-    private String localusername = "babydriver";
+    private String instagramUsername = "Razmik1993";
     private GoogleMap mMap;
     private Boolean mLocationPermissionsGranted = false;
     private FusedLocationProviderClient mFusedLocationProviderClient;
@@ -81,9 +79,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     public static boolean visible = true;
     public String documentID;
     public List<DocumentSnapshot> documents;
-    public double latitude;
-    public double longitude;
-    public GeoPoint geo_point;
+
+    //Constants
+    private final String SHARED_DOCUMENT_ID = "DocumentId";
+    private final String SHARED_LONGITUDE = "Longitude";
+    private final String SHARED_LATITUDE = "Latitude";
+    private final String SHARED_USERNAME = "Username";
 
     //vars to send to fragment
     private ArrayList<String> usernameList = new ArrayList<>();
@@ -98,15 +99,20 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     FirebaseFirestore db = FirebaseFirestore.getInstance();
     Fragment fragment = new UserListFragment();
     Fragment photoFragment = new UserPhotoViewerFragment();
-    ReadWritePrefs readWritePrefs;
+    DefaultPreferencesService defaultPreferencesService;
+    UserFirestoreService firestoreService;
+    UserDocument userDocument;
+
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
 
+        defaultPreferencesService = DefaultPreferencesService.getInstance(getBaseContext());
+        userDocument = UserDocument.getInstance();
+        firestoreService = new UserFirestoreService(getBaseContext());
         getLocationPermission();
-        readWritePrefs = new ReadWritePrefs (DefaultPreferencesService.getInstance(getBaseContext()));
     }
 
 
@@ -162,120 +168,38 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         Toast.makeText(this, "Map is ready", Toast.LENGTH_SHORT).show();
-        readDocFromFirebase(localusername);
-    }
-
-
-
-
-    //ADD USER INFORMATION TO DOCUMENT , ALSO GENERATE DOCUMENT FOR USER
-    private void registerUserToFirebase(GeoPoint geoPoint) {
-
-        final String username = "babydriver";
-        final GeoPoint location = geoPoint;
-        final String link = "https://image.freepik.com/free-vector/abstract-dynamic-pattern-wallpaper-vector_53876-59131.jpg";
-        final int followers = 45;
-        final boolean visible = true;
-        final Map<String, Object> userR = new HashMap<>();
-        userR.put("username", username);
-        userR.put("location", location);
-        userR.put("picture", link);
-        userR.put("followers", followers);
-        userR.put("visible", visible);
-
-        db.collection("userinfo")
-                .add(userR)
-                .addOnSuccessListener(documentReference -> {
-                    String documentID = documentReference.getId();
-                    readWritePrefs.writeData(documentID);
-                    addMarker(link, username, location, followers, visible, true);
-                    Toast.makeText(MapActivity.this, "Your location added to server" + documentID, Toast.LENGTH_SHORT).show();
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Toast.makeText(MapActivity.this, "Error adding your information to server", Toast.LENGTH_SHORT).show();
-                    }
-                });
-
+        defaultPreferencesService.put(SHARED_USERNAME, instagramUsername);
+        readDocFromFirebase();
     }
 
     //USE THIS METHOD TO GET ALL USERS INFORMATION, THEN ADD MARKERS IN CURRENT AREA
-    //TODO move firebase read/write operations to service
-    private void readDocFromFirebase(final String localUsername) {
+    private void readDocFromFirebase() {
 
         visibleChecker();
         openUserList();
-        db.collection("userinfo").get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
-            @Override
-            public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
-                if (!queryDocumentSnapshots.isEmpty()) {
+        startLocationService();
 
-                    documents = queryDocumentSnapshots.getDocuments(); // Get all documents from collection
-                    documentID = readWritePrefs.readData(); // Read logged in users Document ID, stored in shared prefereances in phone
-                    Integer[] intArr = new Integer[documents.size()]; // Loop thru all docuemnts from collection
-
-                    //PLACE HERE READ USER PROFILE PICTURE FROM INSTAGRAM
-                    followers = 45;
-
-                    //FIND CURRENT USERS DOCUMENT AND ADD MARKER
-                    for (int i = 0; i < documents.size(); i++) {
-                        UserDocument userDocument = documents.get(i).toObject(UserDocument.class); // Write documents information to UserDocument class
-                        username = userDocument.getUsername();
-                        location = userDocument.getLocation();
-                        link = userDocument.getPicture();
-                        followers = userDocument.getFollowers();
-                        visible = userDocument.getVisible();
-
-                        //Check if Document ID from cookies matching one of documents from collection
-                        if (documents.get(i).getId().equals(documentID)) {
-                            intArr[i] = 1;
-                            addMarker(link,username,location,followers,visible,true);
-                            startLocationService();
-                        } else if (documentID == null) {
-                            Toast.makeText(MapActivity.this, "No Document for this user found in Cookies", Toast.LENGTH_SHORT).show();
-                        } else {
-                            //Search if logged in users username is matching with one of document usernames from collection
-                            //This process happens once, before user specified Document ID is created
-                            if (username.equals(localUsername)) {
-                                intArr[i] = 1;
-                                documentID = documents.get(i).getId();
-                                readWritePrefs.writeData(documentID);
-                            } else {
-                                intArr[i] = -1;
-                            }
-                        }
-                    }
-                    // Check if 1 number is in array or not, if it's in array that means logged in users document already found, otherwise add user to new document in collection
-                    if (Arrays.asList(intArr).contains(1)) {
-                        Toast.makeText(MapActivity.this, "Welcome back " + localUsername, Toast.LENGTH_SHORT).show();
-                    } else {
-                        // Adding new document with logged in users information
-                        registerUserToFirebase(geo_point);
-                    }
-
-                    //ADD MARKERS WITH DOCUMENTS WHICH LOCATION IS IN BOUNDS OF CURRENT USERS LOCATION
-                    for (int i = 0; i < documents.size(); i++) {
-                        UserDocument userDocument = documents.get(i).toObject(UserDocument.class); // Write documents information to UserDocument class
-                        String username = userDocument.getUsername();
-                        GeoPoint location = userDocument.getLocation();
-                        String link = userDocument.getPicture();
-                        int followers = userDocument.getFollowers();
-                        boolean visible = userDocument.getVisible();
-                        boolean inBounds = boundProcessing.isMarkerInsideBound(mMap, location);
-                        if (inBounds) {
-                            addMarker(link, username, location, followers, visible, false);
-                        }
-                    }
-                    startLocationUpdates();
-                    updateUserInfo();
-
-                } else {
-                    Toast.makeText(MapActivity.this, "No Documents in this collection", Toast.LENGTH_SHORT).show();
-                }
+        if(!firestoreService.findUserByDocumentId()) {
+            if(!firestoreService.findUserByUsername()) {
+                userDocument.setUsername(instagramUsername);
+                userDocument.setPicture("https://image.freepik.com/free-vector/abstract-dynamic-pattern-wallpaper-vector_53876-59131.jpg");
+                userDocument.setFollowers(5478);
+                userDocument.setVisible(true);
+                double longitude = Double.valueOf(defaultPreferencesService.get(SHARED_LONGITUDE,""));
+                double latitude = Double.valueOf(defaultPreferencesService.get(SHARED_LATITUDE, ""));
+                userDocument.setLocation(new GeoPoint(latitude,longitude));
+                firestoreService.addUser(userDocument);
             }
-        });
+        }
+        String username = userDocument.getUsername();
+        GeoPoint location = userDocument.getLocation();
+        String link = userDocument.getPicture();
+        int followers = userDocument.getFollowers();
+        boolean visible = userDocument.getVisible();
+        addMarker(link, username, location, followers, visible, true);
 
+        startLocationUpdates();
+        updateUserInfo();
     }
 
 
@@ -403,7 +327,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 user.put("picture", link);
                 user.put("followers", followers);
                 user.put("visible", visible);
-                db.collection("userinfo").document(documentID).update(user).addOnSuccessListener(new OnSuccessListener<Void>() {
+                db.collection("userinfo").document(defaultPreferencesService.get(SHARED_DOCUMENT_ID,"")).update(user).addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
                     public void onSuccess(Void aVoid) {
 
