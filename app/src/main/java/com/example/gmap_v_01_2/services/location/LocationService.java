@@ -37,6 +37,7 @@ public class LocationService extends Service {
 
     private FusedLocationProviderClient fusedLocationProviderClient;
     private DefaultPreferencesService defaultPreferencesService;
+    private UserDocument document;
     private static final String SHARED_LONGITUDE = "Longitude";
     private static final String SHARED_LATITUDE = "Latitude";
     private final static long UPDATE_INTERVAL = 4 * 1000; // 4 seconds
@@ -56,6 +57,7 @@ public class LocationService extends Service {
     public void onCreate() {
         super.onCreate();
         defaultPreferencesService = DefaultPreferencesService.getInstance(getApplicationContext());
+        document = UserDocument.getInstance();
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         if (Build.VERSION.SDK_INT >= 26) {
@@ -95,41 +97,10 @@ public class LocationService extends Service {
                     GeoPoint geoPoint = new GeoPoint(location.getLatitude(), location.getLongitude());
                     defaultPreferencesService.put(SHARED_LONGITUDE, String.valueOf(location.getLongitude()));
                     defaultPreferencesService.put(SHARED_LATITUDE, String.valueOf(location.getLatitude()));
-                    UserDocument userDocument = UserDocument.getInstance();
-                    userDocument.setPicture(link);
-                    userDocument.setUsername(username);
-                    userDocument.setLocation(geoPoint);
-                    userDocument.setFollowers(followers);
-                    saveUserLocation(userDocument, documentID);
+                    document.setLocation(geoPoint);
                 }
             }
         }, Looper.myLooper());
-    }
-
-    private void saveUserLocation(final UserDocument userDocument, String documentid) {
-        if (documentid != null) {
-            try {
-                FirebaseFirestore db = FirebaseFirestore.getInstance();
-                Map<String, Object> user = new HashMap<>();
-                user.put("username", userDocument.getUsername());
-                user.put("location", userDocument.getLocation());
-                user.put("picture", userDocument.getPicture());
-                user.put("followers", userDocument.getFollowers());
-                db.collection("userinfo").document(documentid).update(user).addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-
-                    }
-                }).addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-
-                    }
-                });
-            } catch (Exception e) {
-               stopSelf();
-            }
-        }
     }
 
 }

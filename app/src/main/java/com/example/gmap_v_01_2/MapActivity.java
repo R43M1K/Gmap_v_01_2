@@ -29,6 +29,7 @@ import com.example.gmap_v_01_2.editor.ImageProcessing;
 import com.example.gmap_v_01_2.editor.ImageURLProcessing;
 import com.example.gmap_v_01_2.fragments.UserListFragment;
 import com.example.gmap_v_01_2.fragments.UserPhotoViewerFragment;
+import com.example.gmap_v_01_2.model.users.UserDocumentAll;
 import com.example.gmap_v_01_2.services.firestore.UserFirestoreService;
 import com.example.gmap_v_01_2.services.location.LocationService;
 import com.example.gmap_v_01_2.model.users.UserDocument;
@@ -85,6 +86,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private final String SHARED_LONGITUDE = "Longitude";
     private final String SHARED_LATITUDE = "Latitude";
     private final String SHARED_USERNAME = "Username";
+    private final String SHARED_FOLLOWERS = "Followers";
 
     //vars to send to fragment
     private ArrayList<String> usernameList = new ArrayList<>();
@@ -179,18 +181,16 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         openUserList();
         startLocationService();
 
-        if(!firestoreService.findUserByDocumentId()) {
-            if(!firestoreService.findUserByUsername()) {
-                userDocument.setUsername(instagramUsername);
-                userDocument.setPicture("https://image.freepik.com/free-vector/abstract-dynamic-pattern-wallpaper-vector_53876-59131.jpg");
-                userDocument.setFollowers(5478);
-                userDocument.setVisible(true);
-                double longitude = Double.valueOf(defaultPreferencesService.get(SHARED_LONGITUDE,""));
-                double latitude = Double.valueOf(defaultPreferencesService.get(SHARED_LATITUDE, ""));
-                userDocument.setLocation(new GeoPoint(latitude,longitude));
-                firestoreService.addUser(userDocument);
-            }
-        }
+        userDocument.setUsername(instagramUsername);
+        userDocument.setPicture("https://image.freepik.com/free-vector/abstract-dynamic-pattern-wallpaper-vector_53876-59131.jpg");
+        userDocument.setFollowers(5478);
+        userDocument.setVisible(true);
+        double longitude = Double.valueOf(defaultPreferencesService.get(SHARED_LONGITUDE,""));
+        double latitude = Double.valueOf(defaultPreferencesService.get(SHARED_LATITUDE, ""));
+        userDocument.setLocation(new GeoPoint(latitude,longitude));
+
+        firestoreService.findUserByDocumentId();
+
         String username = userDocument.getUsername();
         GeoPoint location = userDocument.getLocation();
         String link = userDocument.getPicture();
@@ -198,7 +198,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         boolean visible = userDocument.getVisible();
         addMarker(link, username, location, followers, visible, true);
 
-        startLocationUpdates();
+        //startLocationUpdates();
         updateUserInfo();
     }
 
@@ -286,30 +286,19 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             @Override
             public void run() {
                 mMap.clear(); // Clear map from markers
-                db.collection("userinfo").get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
-                    @Override
-                    public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
-                        if (!queryDocumentSnapshots.isEmpty()) {
-                            documents = queryDocumentSnapshots.getDocuments();
-                        }
-                    }
-                });
                 //Clear arrays that contains params of users for UserList fragment
                 userpictureList.clear();
                 usernameList.clear();
                 userfollowersList.clear();
                 userfullpicture.clear();
-                for (int i = 0; i < documents.size(); i++) {
-                    UserDocument userDocument = documents.get(i).toObject(UserDocument.class); // Write documents information to UserDocument class
-                    String username = userDocument.getUsername();
-                    GeoPoint location = userDocument.getLocation();
-                    String link = userDocument.getPicture();
-                    int followers = userDocument.getFollowers();
-                    boolean visible = userDocument.getVisible();
-                    boolean inBounds = boundProcessing.isMarkerInsideBound(mMap, location);
-                    if (inBounds) {
-                        addMarker(link, username, location, followers, visible, false);
-                    }
+                ArrayList<UserDocumentAll> listInBounds = firestoreService.getInBoundUsers(mMap);
+                for(int i=0; i<listInBounds.size(); i++) {
+                    String link = listInBounds.get(i).getPicture();
+                    String username = listInBounds.get(i).getUsername();
+                    GeoPoint location = listInBounds.get(i).getLocation();
+                    int followers = listInBounds.get(i).getFollowers();
+                    boolean visible = listInBounds.get(i).getVisible();
+                    addMarker(link, username, location, followers, visible, false);
                 }
                 mHandler.postDelayed(mRunnable, LOCATION_UPDATE_INTERVAL);
             }
@@ -321,18 +310,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         iHandler.postDelayed(iRunnable = new Runnable() {
             @Override
             public void run() {
-                Map<String, Object> user = new HashMap<>();
-                user.put("username", username);
-                user.put("location", location);
-                user.put("picture", link);
-                user.put("followers", followers);
-                user.put("visible", visible);
-                db.collection("userinfo").document(defaultPreferencesService.get(SHARED_DOCUMENT_ID,"")).update(user).addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-
-                    }
-                });
+                firestoreService.updateUser();
+                userDocument.getLocation();
                 iHandler.postDelayed(iRunnable, LOCATION_UPDATE_INTERVAL);
             }
         }, LOCATION_UPDATE_INTERVAL);

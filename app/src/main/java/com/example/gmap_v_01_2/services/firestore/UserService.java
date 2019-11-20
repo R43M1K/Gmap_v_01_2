@@ -4,5 +4,5 @@ import com.example.gmap_v_01_2.model.users.UserDocument;
 
 public interface UserService {
     void updateUser();
-    void addUser(UserDocument userDocument);
+    void addUser();
 }

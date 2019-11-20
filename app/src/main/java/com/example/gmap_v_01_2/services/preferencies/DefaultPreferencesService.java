@@ -37,6 +37,15 @@ public final class DefaultPreferencesService implements PreferencesService {
         } else if (value instanceof String) {
             editor.putString(key, (String) value);
             Log.d(TAG, "put String value: " + value);
+        } else if (value instanceof  Long) {
+            editor.putLong(key, (Long) value);
+            Log.d(TAG, "put Long value " + value);
+        } else if (value instanceof Boolean) {
+            editor.putBoolean(key, (Boolean) value);
+            Log.d(TAG, "put double value " + value);
+        } else if (value instanceof Integer) {
+            editor.putInt(key, (Integer) value);
+            Log.d(TAG, "put integer value " + value);
         }
 
         editor.apply();
@@ -47,12 +56,20 @@ public final class DefaultPreferencesService implements PreferencesService {
     public <T> T get(String key, T defaultValue) {
 
         if (defaultValue instanceof Float) {
-            Float value = Float.valueOf(sharedPreferences.getFloat(key, (Float) defaultValue));
+            Float value = sharedPreferences.getFloat(key, (Float) defaultValue);
             Log.d(TAG, "get float value: " + value);
             return (T) value;
         } else if (defaultValue instanceof String) {
             String value = sharedPreferences.getString(key, (String) defaultValue);
             Log.d(TAG, "get string value: " + value);
+            return (T) value;
+        } else if (defaultValue instanceof Long) {
+            Long value = sharedPreferences.getLong(key, (Long) defaultValue);
+            Log.d(TAG, "get long value: " + value);
+            return (T) value;
+        } else if(defaultValue instanceof Integer) {
+            Integer value = sharedPreferences.getInt(key, (Integer) defaultValue);
+            Log.d(TAG, "get integer value " + value);
             return (T) value;
         }
 
