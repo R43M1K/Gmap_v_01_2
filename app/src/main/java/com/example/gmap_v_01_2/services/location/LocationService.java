@@ -57,7 +57,7 @@ public class LocationService extends Service {
     public void onCreate() {
         super.onCreate();
         defaultPreferencesService = DefaultPreferencesService.getInstance(getApplicationContext());
-        document = UserDocument.getInstance();
+        document = new UserDocument();
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         if (Build.VERSION.SDK_INT >= 26) {
@@ -97,7 +97,6 @@ public class LocationService extends Service {
                     GeoPoint geoPoint = new GeoPoint(location.getLatitude(), location.getLongitude());
                     defaultPreferencesService.put(SHARED_LONGITUDE, String.valueOf(location.getLongitude()));
                     defaultPreferencesService.put(SHARED_LATITUDE, String.valueOf(location.getLatitude()));
-                    document.setLocation(geoPoint);
                 }
             }
         }, Looper.myLooper());

@@ -30,6 +30,7 @@ import com.example.gmap_v_01_2.editor.ImageURLProcessing;
 import com.example.gmap_v_01_2.fragments.UserListFragment;
 import com.example.gmap_v_01_2.fragments.UserPhotoViewerFragment;
 import com.example.gmap_v_01_2.model.users.UserDocumentAll;
+import com.example.gmap_v_01_2.services.firestore.FirestoreReader;
 import com.example.gmap_v_01_2.services.firestore.UserFirestoreService;
 import com.example.gmap_v_01_2.services.location.LocationService;
 import com.example.gmap_v_01_2.model.users.UserDocument;
@@ -42,18 +43,12 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
-import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 public class MapActivity extends AppCompatActivity implements OnMapReadyCallback , UserListFragment.OnFragmentInteractionListener , UserPhotoViewerFragment.OnPhotoFragmentInteractionListener {
@@ -112,9 +107,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         setContentView(R.layout.activity_map);
 
         defaultPreferencesService = DefaultPreferencesService.getInstance(getBaseContext());
-        userDocument = UserDocument.getInstance();
-        firestoreService = new UserFirestoreService(getBaseContext());
+        userDocument = new UserDocument();
+        firestoreService = UserFirestoreService.getInstance(getBaseContext());
         getLocationPermission();
+        startLocationService();
     }
 
 
@@ -171,25 +167,23 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         mMap = googleMap;
         Toast.makeText(this, "Map is ready", Toast.LENGTH_SHORT).show();
         defaultPreferencesService.put(SHARED_USERNAME, instagramUsername);
+        visibleChecker();
+        openUserList();
         readDocFromFirebase();
     }
 
     //USE THIS METHOD TO GET ALL USERS INFORMATION, THEN ADD MARKERS IN CURRENT AREA
     private void readDocFromFirebase() {
 
-        visibleChecker();
-        openUserList();
-        startLocationService();
-
         userDocument.setUsername(instagramUsername);
         userDocument.setPicture("https://image.freepik.com/free-vector/abstract-dynamic-pattern-wallpaper-vector_53876-59131.jpg");
         userDocument.setFollowers(5478);
         userDocument.setVisible(true);
-        double longitude = Double.valueOf(defaultPreferencesService.get(SHARED_LONGITUDE,""));
-        double latitude = Double.valueOf(defaultPreferencesService.get(SHARED_LATITUDE, ""));
-        userDocument.setLocation(new GeoPoint(latitude,longitude));
-
-        firestoreService.findUserByDocumentId();
+        if(userDocument.getLocation() == null) {
+            double longitude = Double.valueOf(defaultPreferencesService.get(SHARED_LONGITUDE,""));
+            double latitude = Double.valueOf(defaultPreferencesService.get(SHARED_LATITUDE, ""));
+            userDocument.setLocation(new GeoPoint(latitude,longitude));
+        }
 
         String username = userDocument.getUsername();
         GeoPoint location = userDocument.getLocation();
@@ -199,7 +193,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         addMarker(link, username, location, followers, visible, true);
 
         //startLocationUpdates();
-        updateUserInfo();
+        //updateUserInfo();
+        loader();
     }
 
 
@@ -306,12 +301,35 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     //REPEATING METHOD UPDATING USER INFO TO FIREBASE
+    /*
     private void updateUserInfo() {
         iHandler.postDelayed(iRunnable = new Runnable() {
             @Override
             public void run() {
-                firestoreService.updateUser();
-                userDocument.getLocation();
+                firestoreService.updateUser(userDocument);
+                iHandler.postDelayed(iRunnable, LOCATION_UPDATE_INTERVAL);
+            }
+        }, LOCATION_UPDATE_INTERVAL);
+    }
+     */
+
+    private void loader() {
+        iHandler.postDelayed(iRunnable = new Runnable() {
+            @Override
+            public void run() {
+                double longitude = Double.valueOf(defaultPreferencesService.get(SHARED_LONGITUDE,""));
+                double latitude = Double.valueOf(defaultPreferencesService.get(SHARED_LATITUDE, ""));
+                userDocument.setLocation(new GeoPoint(latitude,longitude));
+                firestoreService.findUserByDocumentId(new FirestoreReader() {
+                    @Override
+                    public void getUser(UserDocument document) {
+                        if(document == null) {
+                            firestoreService.addUser(userDocument);
+                        }else{
+                            firestoreService.updateUser(userDocument);
+                        }
+                    }
+                });
                 iHandler.postDelayed(iRunnable, LOCATION_UPDATE_INTERVAL);
             }
         }, LOCATION_UPDATE_INTERVAL);

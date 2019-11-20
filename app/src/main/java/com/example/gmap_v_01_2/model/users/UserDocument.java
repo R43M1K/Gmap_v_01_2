@@ -6,25 +6,13 @@ public class UserDocument {
     //USE THIS CLASS AS A DOCUMENT, INCLUDED VALUES ARE PARAMETERS FROM COLLECTION DOCUMENT userinfo
     //WRITE DOCUMENT WITH THIS PARAMETERS IN THIS CLASS. LATER USE THIS CLASS GETTERS TO READ DATA
 
-    private static UserDocument INSTANCE = null;
     private String username;
     private GeoPoint location;
     private String picture;
     private int followers;
     private boolean visible;
 
-    public static UserDocument getInstance() {
-        if(INSTANCE == null) {
-            synchronized (UserDocument.class) {
-                if(INSTANCE == null) {
-                    INSTANCE = new UserDocument();
-                }
-            }
-        }
-        return INSTANCE;
-    }
-
-    private UserDocument() {
+    public UserDocument() {
 
     }
 

@@ -71,6 +71,10 @@ public final class DefaultPreferencesService implements PreferencesService {
             Integer value = sharedPreferences.getInt(key, (Integer) defaultValue);
             Log.d(TAG, "get integer value " + value);
             return (T) value;
+        } else if(defaultValue instanceof Boolean) {
+            Boolean value = sharedPreferences.getBoolean(key, (Boolean) defaultValue);
+            Log.d(TAG, "get boolean value " + value);
+            return (T) value;
         }
 
         return null;
