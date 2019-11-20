@@ -190,61 +190,16 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         String link = userDocument.getPicture();
         int followers = userDocument.getFollowers();
         boolean visible = userDocument.getVisible();
-        addMarker(link, username, location, followers, visible, true);
+        Thread thread = new Thread(new addMarkerRunnable(link, username, location, followers, visible, true));
+        thread.start();
 
-        //startLocationUpdates();
         //updateUserInfo();
         loader();
+        startLocationUpdates();
     }
 
 
-    //ADD MARKER TO MAP AND SEND USER PARAMS TO FRAGMENT
-    private void addMarker(String urllink, String userName, @Nullable GeoPoint location, int followers, boolean visible, boolean movecamera) {
 
-        if (visible) {
-            ImageURLProcessing imageURLProcessing = new ImageURLProcessing();
-            imageURLProcessing.execute(urllink);
-            try {
-                Bitmap bitmap = imageURLProcessing.get();
-                MarkerOptions markerOptions = new MarkerOptions();
-                Bitmap roundBitMap;
-                Bitmap resizedBitMap;
-                Bitmap userListFragmentBitmap;
-                resizedBitMap = imageProcessing.getResizedBitmap(bitmap, followers); // Resize bitmap
-                roundBitMap = imageProcessing.getCroppedBitmap(resizedBitMap); // Make current bitmap to round type
-                userListFragmentBitmap = imageProcessing.getCroppedBitmap(imageProcessing.getResizedBitmapForUserListFragment(bitmap)); // Make current bitmap for userlist fragment type
-                String userPictureString = imageProcessing.bitmapToString(userListFragmentBitmap); //Convert bitmap to String to send to fragment as param
-                String fullPictureString = imageProcessing.bitmapToString(bitmap);
-
-                //TODO read current location data from shared prefs
-                LatLng userLongLat = new LatLng(1, 1);
-
-                if (location != null) {
-                    userLongLat = new LatLng(location.getLatitude(), location.getLongitude());
-                }
-                markerOptions.position(userLongLat);
-                markerOptions.icon(BitmapDescriptorFactory.fromBitmap(roundBitMap));
-                String userFollowers = followersProcessing.instagramFollowersType(followers);
-                markerOptions.title(userName + " : " + userFollowers + " Followers");
-                mMap.setMinZoomPreference(18f); // User cannot zoom out of 18 zoom distance
-                mMap.addMarker(markerOptions); // Adding marker on map
-                if (movecamera) {
-                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLongLat, 19f)); // Move camera to user location in 19 zoom value
-                }
-                //Save user params for userList fragment
-                userpictureList.add(userPictureString);
-                usernameList.add(userName);
-                userfollowersList.add(userFollowers);
-                userfullpicture.add(fullPictureString);
-
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-        }
-    }
 
 
     //START BACKGROUND SERVICE THAT GET USER LOCATION WHEN IT'S CHANGED AND WRITE TO FIREBASE
@@ -293,7 +248,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     GeoPoint location = listInBounds.get(i).getLocation();
                     int followers = listInBounds.get(i).getFollowers();
                     boolean visible = listInBounds.get(i).getVisible();
-                    addMarker(link, username, location, followers, visible, false);
+                    Thread thread = new Thread(new addMarkerRunnable(link, username, location, followers, visible, false));
+                    thread.start();
                 }
                 mHandler.postDelayed(mRunnable, LOCATION_UPDATE_INTERVAL);
             }
@@ -423,6 +379,126 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
             fragmentTransaction.remove(photoFragment);
             fragmentTransaction.commit();
+        }
+    }
+
+    private class addMarkerRunnable implements Runnable {
+
+        private String picture;
+        private String username;
+        private GeoPoint location;
+        private int followers;
+        private boolean visible;
+        private boolean movecamera;
+
+        public addMarkerRunnable(String picture, String username, GeoPoint location, int followers, boolean visible, boolean movecamera) {
+            this.picture = picture;
+            this.username = username;
+            this.followers = followers;
+            this.location = location;
+            this.visible = visible;
+            this.movecamera = movecamera;
+        }
+
+        @Override
+        public void run() {
+            //ADD MARKER TO MAP AND SEND USER PARAMS TO FRAGMENT
+            if (visible) {
+                ImageURLProcessing imageURLProcessing = new ImageURLProcessing();
+                imageURLProcessing.execute(picture);
+                try {
+                    Bitmap bitmap = imageURLProcessing.get();
+                    MarkerOptions markerOptions = new MarkerOptions();
+                    Bitmap roundBitMap;
+                    Bitmap resizedBitMap;
+                    Bitmap userListFragmentBitmap;
+                    resizedBitMap = imageProcessing.getResizedBitmap(bitmap, followers); // Resize bitmap
+                    roundBitMap = imageProcessing.getCroppedBitmap(resizedBitMap); // Make current bitmap to round type
+                    userListFragmentBitmap = imageProcessing.getCroppedBitmap(imageProcessing.getResizedBitmapForUserListFragment(bitmap)); // Make current bitmap for userlist fragment type
+                    String userPictureString = imageProcessing.bitmapToString(userListFragmentBitmap); //Convert bitmap to String to send to fragment as param
+                    String fullPictureString = imageProcessing.bitmapToString(bitmap);
+
+                    //TODO read current location data from shared prefs
+                    LatLng userLongLat = new LatLng(1, 1);
+
+                    if (location != null) {
+                        userLongLat = new LatLng(location.getLatitude(), location.getLongitude());
+                    }
+                    markerOptions.position(userLongLat);
+                    markerOptions.icon(BitmapDescriptorFactory.fromBitmap(roundBitMap));
+                    String userFollowers = followersProcessing.instagramFollowersType(followers);
+                    markerOptions.title(username + " : " + userFollowers + " Followers");
+                    LatLng finalUserLongLat = userLongLat;
+                    iHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            mMap.setMinZoomPreference(18f); // User cannot zoom out of 18 zoom distance
+                            mMap.addMarker(markerOptions); // Adding marker on map
+                            if (movecamera) {
+                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(finalUserLongLat, 19f)); // Move camera to user location in 19 zoom value
+                            }
+                        }
+                    });
+                    //Save user params for userList fragment
+                    userpictureList.add(userPictureString);
+                    usernameList.add(username);
+                    userfollowersList.add(userFollowers);
+                    userfullpicture.add(fullPictureString);
+
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        }
+    }
+
+    private void addMarker(String urllink, String userName, @Nullable GeoPoint location, int followers, boolean visible, boolean movecamera) {
+
+        if (visible) {
+            ImageURLProcessing imageURLProcessing = new ImageURLProcessing();
+            imageURLProcessing.execute(urllink);
+            try {
+                Bitmap bitmap = imageURLProcessing.get();
+                MarkerOptions markerOptions = new MarkerOptions();
+                Bitmap roundBitMap;
+                Bitmap resizedBitMap;
+                Bitmap userListFragmentBitmap;
+                resizedBitMap = imageProcessing.getResizedBitmap(bitmap, followers); // Resize bitmap
+                roundBitMap = imageProcessing.getCroppedBitmap(resizedBitMap); // Make current bitmap to round type
+                userListFragmentBitmap = imageProcessing.getCroppedBitmap(imageProcessing.getResizedBitmapForUserListFragment(bitmap)); // Make current bitmap for userlist fragment type
+                String userPictureString = imageProcessing.bitmapToString(userListFragmentBitmap); //Convert bitmap to String to send to fragment as param
+                String fullPictureString = imageProcessing.bitmapToString(bitmap);
+
+                //TODO read current location data from shared prefs
+                LatLng userLongLat = new LatLng(1, 1);
+
+                if (location != null) {
+                    userLongLat = new LatLng(location.getLatitude(), location.getLongitude());
+                }
+                markerOptions.position(userLongLat);
+                markerOptions.icon(BitmapDescriptorFactory.fromBitmap(roundBitMap));
+                String userFollowers = followersProcessing.instagramFollowersType(followers);
+                markerOptions.title(userName + " : " + userFollowers + " Followers");
+                mMap.setMinZoomPreference(18f); // User cannot zoom out of 18 zoom distance
+                mMap.addMarker(markerOptions); // Adding marker on map
+                if (movecamera) {
+                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLongLat, 19f)); // Move camera to user location in 19 zoom value
+                }
+                //Save user params for userList fragment
+                userpictureList.add(userPictureString);
+                usernameList.add(userName);
+                userfollowersList.add(userFollowers);
+                userfullpicture.add(fullPictureString);
+
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
         }
     }
 }
