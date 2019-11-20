@@ -58,7 +58,7 @@ public class UserFirestoreService implements UserService {
         user.put("location", userDocument.getLocation());
         user.put("picture", userDocument.getPicture());
         user.put("followers", userDocument.getFollowers());
-        user.put("visible", userDocument.getVisible());
+        user.put("visibility", userDocument.getVisible());
         firestore.collection(TABLE_NAME).add(user).addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
             @Override
             public void onSuccess(DocumentReference documentReference) {
@@ -75,7 +75,7 @@ public class UserFirestoreService implements UserService {
         user.put("location", userDocument.getLocation());
         user.put("picture", userDocument.getPicture());
         user.put("followers", userDocument.getFollowers());
-        user.put("visible", userDocument.getVisible());
+        user.put("visibility", userDocument.getVisible());
         firestore.collection(TABLE_NAME).document(preferences.get(SHARED_DOCUMENT_ID,"")).update(user).addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {

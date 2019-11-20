@@ -23,7 +23,7 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
-import com.example.gmap_v_01_2.editor.BoundProcessing;
+
 import com.example.gmap_v_01_2.editor.FollowerProcessing;
 import com.example.gmap_v_01_2.editor.ImageProcessing;
 import com.example.gmap_v_01_2.editor.ImageURLProcessing;
@@ -43,12 +43,9 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public class MapActivity extends AppCompatActivity implements OnMapReadyCallback , UserListFragment.OnFragmentInteractionListener , UserPhotoViewerFragment.OnPhotoFragmentInteractionListener {
@@ -57,24 +54,21 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private static final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
     private static final String COARSE_LOCATION = Manifest.permission.ACCESS_COARSE_LOCATION;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1234;
-    private static final int LOCATION_UPDATE_INTERVAL = 3000;
+    private static final int LOCATION_UPDATE_INTERVAL = 2000;
 
     //vars
     private String instagramUsername = "Razmik1993";
     private GoogleMap mMap;
     private Boolean mLocationPermissionsGranted = false;
     private FusedLocationProviderClient mFusedLocationProviderClient;
-    private Handler mHandler = new Handler();
     private Handler iHandler = new Handler();
     private Runnable mRunnable;
-    private Runnable iRunnable;
     public static String username;
     public static GeoPoint location;
     public static String link;
     public static int followers;
-    public static boolean visible = true;
+    public static boolean visibility = true;
     public String documentID;
-    public List<DocumentSnapshot> documents;
 
     //Constants
     private final String SHARED_DOCUMENT_ID = "DocumentId";
@@ -92,8 +86,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     //classes
     FollowerProcessing followersProcessing = new FollowerProcessing();
     ImageProcessing imageProcessing = new ImageProcessing(followersProcessing);
-    BoundProcessing boundProcessing = new BoundProcessing();
-    FirebaseFirestore db = FirebaseFirestore.getInstance();
     Fragment fragment = new UserListFragment();
     Fragment photoFragment = new UserPhotoViewerFragment();
     DefaultPreferencesService defaultPreferencesService;
@@ -172,6 +164,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         readDocFromFirebase();
     }
 
+
     //USE THIS METHOD TO GET ALL USERS INFORMATION, THEN ADD MARKERS IN CURRENT AREA
     private void readDocFromFirebase() {
 
@@ -193,12 +186,35 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         Thread thread = new Thread(new addMarkerRunnable(link, username, location, followers, visible, true));
         thread.start();
 
-        //updateUserInfo();
-        loader();
+        Thread loaderThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while(true) {
+                    double longitude = Double.valueOf(defaultPreferencesService.get(SHARED_LONGITUDE, ""));
+                    double latitude = Double.valueOf(defaultPreferencesService.get(SHARED_LATITUDE, ""));
+                    userDocument.setVisible(visibility);
+                    userDocument.setLocation(new GeoPoint(latitude, longitude));
+                    firestoreService.findUserByDocumentId(new FirestoreReader() {
+                        @Override
+                        public void getUser(UserDocument document) {
+                            if (document == null) {
+                                firestoreService.addUser(userDocument);
+                            } else {
+                                firestoreService.updateUser(userDocument);
+                            }
+                        }
+                    });
+                    try {
+                        thread.sleep(LOCATION_UPDATE_INTERVAL);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+        loaderThread.start();
         startLocationUpdates();
     }
-
-
 
 
 
@@ -232,64 +248,30 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     //REPEATING METHOD CLEARING AND ADDING MARKERS ON MAP EVERY INTERVAL
     private void startLocationUpdates() {
-        mHandler.postDelayed(mRunnable = new Runnable() {
+        iHandler.postDelayed(mRunnable = new Runnable() {
             @Override
             public void run() {
-                mMap.clear(); // Clear map from markers
+                mMap.clear();
                 //Clear arrays that contains params of users for UserList fragment
                 userpictureList.clear();
                 usernameList.clear();
                 userfollowersList.clear();
                 userfullpicture.clear();
                 ArrayList<UserDocumentAll> listInBounds = firestoreService.getInBoundUsers(mMap);
-                for(int i=0; i<listInBounds.size(); i++) {
-                    String link = listInBounds.get(i).getPicture();
-                    String username = listInBounds.get(i).getUsername();
-                    GeoPoint location = listInBounds.get(i).getLocation();
-                    int followers = listInBounds.get(i).getFollowers();
-                    boolean visible = listInBounds.get(i).getVisible();
-                    Thread thread = new Thread(new addMarkerRunnable(link, username, location, followers, visible, false));
-                    thread.start();
-                }
-                mHandler.postDelayed(mRunnable, LOCATION_UPDATE_INTERVAL);
-            }
-        }, LOCATION_UPDATE_INTERVAL);
-    }
-
-    //REPEATING METHOD UPDATING USER INFO TO FIREBASE
-    /*
-    private void updateUserInfo() {
-        iHandler.postDelayed(iRunnable = new Runnable() {
-            @Override
-            public void run() {
-                firestoreService.updateUser(userDocument);
-                iHandler.postDelayed(iRunnable, LOCATION_UPDATE_INTERVAL);
-            }
-        }, LOCATION_UPDATE_INTERVAL);
-    }
-     */
-
-    private void loader() {
-        iHandler.postDelayed(iRunnable = new Runnable() {
-            @Override
-            public void run() {
-                double longitude = Double.valueOf(defaultPreferencesService.get(SHARED_LONGITUDE,""));
-                double latitude = Double.valueOf(defaultPreferencesService.get(SHARED_LATITUDE, ""));
-                userDocument.setLocation(new GeoPoint(latitude,longitude));
-                firestoreService.findUserByDocumentId(new FirestoreReader() {
-                    @Override
-                    public void getUser(UserDocument document) {
-                        if(document == null) {
-                            firestoreService.addUser(userDocument);
-                        }else{
-                            firestoreService.updateUser(userDocument);
-                        }
+                    for(int i=0; i<listInBounds.size(); i++) {
+                        String link = listInBounds.get(i).getPicture();
+                        String username = listInBounds.get(i).getUsername();
+                        GeoPoint location = listInBounds.get(i).getLocation();
+                        int followers = listInBounds.get(i).getFollowers();
+                        boolean visible = listInBounds.get(i).getVisible();
+                        Thread thread = new Thread(new addMarkerRunnable(link, username, location, followers, visible, false));
+                        thread.start();
                     }
-                });
-                iHandler.postDelayed(iRunnable, LOCATION_UPDATE_INTERVAL);
+                iHandler.postDelayed(mRunnable, LOCATION_UPDATE_INTERVAL);
             }
         }, LOCATION_UPDATE_INTERVAL);
     }
+
 
     //CHECK VISIBLE SWITCH POSITION
     private void visibleChecker() {
@@ -298,9 +280,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
-                    visible = true;
+                    visibility = true;
                 } else {
-                    visible = false;
+                    visibility = false;
                 }
             }
         });
@@ -452,53 +434,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 }
 
             }
-        }
-    }
-
-    private void addMarker(String urllink, String userName, @Nullable GeoPoint location, int followers, boolean visible, boolean movecamera) {
-
-        if (visible) {
-            ImageURLProcessing imageURLProcessing = new ImageURLProcessing();
-            imageURLProcessing.execute(urllink);
-            try {
-                Bitmap bitmap = imageURLProcessing.get();
-                MarkerOptions markerOptions = new MarkerOptions();
-                Bitmap roundBitMap;
-                Bitmap resizedBitMap;
-                Bitmap userListFragmentBitmap;
-                resizedBitMap = imageProcessing.getResizedBitmap(bitmap, followers); // Resize bitmap
-                roundBitMap = imageProcessing.getCroppedBitmap(resizedBitMap); // Make current bitmap to round type
-                userListFragmentBitmap = imageProcessing.getCroppedBitmap(imageProcessing.getResizedBitmapForUserListFragment(bitmap)); // Make current bitmap for userlist fragment type
-                String userPictureString = imageProcessing.bitmapToString(userListFragmentBitmap); //Convert bitmap to String to send to fragment as param
-                String fullPictureString = imageProcessing.bitmapToString(bitmap);
-
-                //TODO read current location data from shared prefs
-                LatLng userLongLat = new LatLng(1, 1);
-
-                if (location != null) {
-                    userLongLat = new LatLng(location.getLatitude(), location.getLongitude());
-                }
-                markerOptions.position(userLongLat);
-                markerOptions.icon(BitmapDescriptorFactory.fromBitmap(roundBitMap));
-                String userFollowers = followersProcessing.instagramFollowersType(followers);
-                markerOptions.title(userName + " : " + userFollowers + " Followers");
-                mMap.setMinZoomPreference(18f); // User cannot zoom out of 18 zoom distance
-                mMap.addMarker(markerOptions); // Adding marker on map
-                if (movecamera) {
-                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLongLat, 19f)); // Move camera to user location in 19 zoom value
-                }
-                //Save user params for userList fragment
-                userpictureList.add(userPictureString);
-                usernameList.add(userName);
-                userfollowersList.add(userFollowers);
-                userfullpicture.add(fullPictureString);
-
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
         }
     }
 }
