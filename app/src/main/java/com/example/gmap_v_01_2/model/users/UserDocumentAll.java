@@ -4,6 +4,7 @@ import com.google.firebase.firestore.GeoPoint;
 
 public class UserDocumentAll {
 
+    private String documentid;
     private String username;
     private GeoPoint location;
     private String picture;
@@ -11,6 +12,14 @@ public class UserDocumentAll {
     private boolean visible;
 
     public UserDocumentAll() {
+    }
+
+    public String getDocumentid() {
+        return documentid;
+    }
+
+    public void setDocumentid(String documentid) {
+        this.documentid = documentid;
     }
 
     public int getFollowers() {

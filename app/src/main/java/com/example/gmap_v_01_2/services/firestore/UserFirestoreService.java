@@ -29,7 +29,6 @@ public class UserFirestoreService implements UserService {
     private final String SHARED_DOCUMENT_ID = "DocumentId";
     private final String SHARED_USERNAME = "Username";
     private final String TABLE_NAME = "userinfo";
-    private String foundId;
     private ArrayList<UserDocumentAll> usersInBound;
 
     public static UserFirestoreService getInstance(Context context) {
@@ -92,6 +91,7 @@ public class UserFirestoreService implements UserService {
                 if(!queryDocumentSnapshots.getDocuments().isEmpty()) {
                     for (int i = 0; i < queryDocumentSnapshots.getDocuments().size(); i++) {
                         UserDocumentAll userDocumentAll = queryDocumentSnapshots.getDocuments().get(i).toObject(UserDocumentAll.class);
+                        userDocumentAll.setDocumentid(queryDocumentSnapshots.getDocuments().get(i).getId());
                         if(boundProcessing.isMarkerInsideBound(map, userDocumentAll.getLocation())) {
                             usersInBound.add(userDocumentAll);
                         }
@@ -102,23 +102,20 @@ public class UserFirestoreService implements UserService {
         return usersInBound;
     }
 
-    public String findUserByDocumentId(final FirestoreReader listener) {
+    public void findUserByDocumentId(final FirestoreReader listener) {
         firestore.collection(TABLE_NAME).get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
             @Override
             public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
-                String foundId = "notfound";
                 document = null;
                 if(!queryDocumentSnapshots.isEmpty()) {
                     for (int i = 0; i < queryDocumentSnapshots.getDocuments().size(); i++) {
                         if (queryDocumentSnapshots.getDocuments().get(i).getId().equals(preferences.get(SHARED_DOCUMENT_ID, ""))) {
                             document = queryDocumentSnapshots.getDocuments().get(i).toObject(UserDocument.class);
                             Log.d(TAG, "Found user document id, and updated UserDocument class");
-                            foundId = "foundid";
                             break;
                         }else if(queryDocumentSnapshots.getDocuments().get(i).toObject(UserDocument.class).getUsername().equals(preferences.get(SHARED_USERNAME,""))) {
                             document = queryDocumentSnapshots.getDocuments().get(i).toObject(UserDocument.class);
                             preferences.put(SHARED_DOCUMENT_ID, queryDocumentSnapshots.getDocuments().get(i).getId());
-                            foundId = "foundname";
                             break;
                         }
                     }
@@ -128,7 +125,6 @@ public class UserFirestoreService implements UserService {
                 }
             }
         });
-        return foundId;
     }
 
 }

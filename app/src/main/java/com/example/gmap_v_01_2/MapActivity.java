@@ -29,6 +29,7 @@ import com.example.gmap_v_01_2.editor.ImageProcessing;
 import com.example.gmap_v_01_2.editor.ImageURLProcessing;
 import com.example.gmap_v_01_2.fragments.UserListFragment;
 import com.example.gmap_v_01_2.fragments.UserPhotoViewerFragment;
+import com.example.gmap_v_01_2.model.users.Markers;
 import com.example.gmap_v_01_2.model.users.UserDocumentAll;
 import com.example.gmap_v_01_2.services.firestore.FirestoreReader;
 import com.example.gmap_v_01_2.services.firestore.UserFirestoreService;
@@ -42,6 +43,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.firestore.GeoPoint;
 
@@ -82,6 +84,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private ArrayList<String> userpictureList = new ArrayList<>();
     private ArrayList<String> userfollowersList = new ArrayList<>();
     private ArrayList<String> userfullpicture = new ArrayList<>();
+    private ArrayList<Markers> markerList = new ArrayList<>();
+    ArrayList<UserDocumentAll> listInBounds = new ArrayList<>();
 
     //classes
     FollowerProcessing followersProcessing = new FollowerProcessing();
@@ -183,7 +187,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         String link = userDocument.getPicture();
         int followers = userDocument.getFollowers();
         boolean visible = userDocument.getVisible();
-        Thread thread = new Thread(new addMarkerRunnable(link, username, location, followers, visible, true));
+        Thread thread = new Thread(new addMarkerRunnable(defaultPreferencesService.get(SHARED_DOCUMENT_ID,""),link, username, location, followers, visible, true));
         thread.start();
 
         Thread loaderThread = new Thread(new Runnable() {
@@ -201,6 +205,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                                 firestoreService.addUser(userDocument);
                             } else {
                                 firestoreService.updateUser(userDocument);
+                                loadMarkers();
                             }
                         }
                     });
@@ -213,10 +218,66 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             }
         });
         loaderThread.start();
-        startLocationUpdates();
+        //startLocationUpdates();
     }
 
+    private void loadMarkers() {
+        userpictureList.clear();
+        usernameList.clear();
+        userfollowersList.clear();
+        userfullpicture.clear();
+        listInBounds = firestoreService.getInBoundUsers(mMap);
+        if(markerList.isEmpty()){
+            if(!listInBounds.isEmpty()) {
+                for(int i=0; i<listInBounds.size(); i++) {
+                    String id = listInBounds.get(i).getDocumentid();
+                    String link = listInBounds.get(i).getPicture();
+                    String username = listInBounds.get(i).getUsername();
+                    GeoPoint location = listInBounds.get(i).getLocation();
+                    int followers = listInBounds.get(i).getFollowers();
+                    boolean visible = listInBounds.get(i).getVisible();
+                    Thread thread = new Thread(new addMarkerRunnable(id, link, username, location, followers, visible, false));
+                    thread.start();
+                }
+            }
+        }else{
+            //Remove from markerList those markers which don't exist anymore
+            ArrayList<Markers> markerListTemp = new ArrayList<>();
+            for(int i=0; i<markerList.size(); i++) {
+                boolean found = false;
+                for(int j=0; j<listInBounds.size(); j++) {
+                    if(markerList.get(i).getDocumentId().equals(listInBounds.get(j).getDocumentid())) {
+                        found = true;
+                        markerListTemp.add(markerList.get(i));
+                        break;
+                    }
+                }
+                if(!found) {
+                    markerList.get(i).getMarker().remove();
+                }
+            }
+            markerList.clear();
+            markerList = markerListTemp;
 
+            //Add markers from Firebase, if they do not exist on map
+            for(int i=0; i<listInBounds.size(); i++) {
+                boolean found = false;
+                for(int j=0; j<markerList.size(); j++) {
+                    if(listInBounds.get(i).getDocumentid().equals(markerList.get(j).getDocumentId())) {
+                        found = true;
+                        break;
+                    }
+                }
+                if(!found) {
+                    Thread thread = new Thread(new addMarkerRunnable(listInBounds.get(i).getDocumentid(),
+                            listInBounds.get(i).getPicture(), listInBounds.get(i).getUsername(),
+                            listInBounds.get(i).getLocation(), listInBounds.get(i).getFollowers(),
+                            listInBounds.get(i).getVisible(), false));
+                    thread.start();
+                }
+            }
+        }
+    }
 
     //START BACKGROUND SERVICE THAT GET USER LOCATION WHEN IT'S CHANGED AND WRITE TO FIREBASE
     private void startLocationService() {
@@ -245,33 +306,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         }
         return false;
     }
-
-    //REPEATING METHOD CLEARING AND ADDING MARKERS ON MAP EVERY INTERVAL
-    private void startLocationUpdates() {
-        iHandler.postDelayed(mRunnable = new Runnable() {
-            @Override
-            public void run() {
-                mMap.clear();
-                //Clear arrays that contains params of users for UserList fragment
-                userpictureList.clear();
-                usernameList.clear();
-                userfollowersList.clear();
-                userfullpicture.clear();
-                ArrayList<UserDocumentAll> listInBounds = firestoreService.getInBoundUsers(mMap);
-                    for(int i=0; i<listInBounds.size(); i++) {
-                        String link = listInBounds.get(i).getPicture();
-                        String username = listInBounds.get(i).getUsername();
-                        GeoPoint location = listInBounds.get(i).getLocation();
-                        int followers = listInBounds.get(i).getFollowers();
-                        boolean visible = listInBounds.get(i).getVisible();
-                        Thread thread = new Thread(new addMarkerRunnable(link, username, location, followers, visible, false));
-                        thread.start();
-                    }
-                iHandler.postDelayed(mRunnable, LOCATION_UPDATE_INTERVAL);
-            }
-        }, LOCATION_UPDATE_INTERVAL);
-    }
-
 
     //CHECK VISIBLE SWITCH POSITION
     private void visibleChecker() {
@@ -366,6 +400,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     private class addMarkerRunnable implements Runnable {
 
+        private String id;
         private String picture;
         private String username;
         private GeoPoint location;
@@ -373,13 +408,14 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         private boolean visible;
         private boolean movecamera;
 
-        public addMarkerRunnable(String picture, String username, GeoPoint location, int followers, boolean visible, boolean movecamera) {
+        public addMarkerRunnable(String id,String picture, String username, GeoPoint location, int followers, boolean visible, boolean movecamera) {
             this.picture = picture;
             this.username = username;
             this.followers = followers;
             this.location = location;
             this.visible = visible;
             this.movecamera = movecamera;
+            this.id = id;
         }
 
         @Override
@@ -415,7 +451,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                         @Override
                         public void run() {
                             mMap.setMinZoomPreference(18f); // User cannot zoom out of 18 zoom distance
-                            mMap.addMarker(markerOptions); // Adding marker on map
+                            Marker marker = mMap.addMarker(markerOptions); // Adding marker on map.
+                            Markers markers = new Markers();
+                            markers.setDocumentId(id);
+                            markers.setMarkerId(marker.getId());
+                            markers.setMarker(marker);
+                            markerList.add(markers);
                             if (movecamera) {
                                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(finalUserLongLat, 19f)); // Move camera to user location in 19 zoom value
                             }

@@ -49,7 +49,6 @@ public final class DefaultPreferencesService implements PreferencesService {
         }
 
         editor.apply();
-        //TODO add all other types
     }
 
     @Override
