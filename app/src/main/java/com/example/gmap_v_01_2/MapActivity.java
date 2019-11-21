@@ -85,7 +85,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private ArrayList<String> userfollowersList = new ArrayList<>();
     private ArrayList<String> userfullpicture = new ArrayList<>();
     private ArrayList<Markers> markerList = new ArrayList<>();
-    ArrayList<UserDocumentAll> listInBounds = new ArrayList<>();
+    private ArrayList<UserDocumentAll> listInBounds = new ArrayList<>();
 
     //classes
     FollowerProcessing followersProcessing = new FollowerProcessing();
