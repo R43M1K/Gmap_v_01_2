@@ -13,25 +13,18 @@ import android.os.Build;
 import android.os.IBinder;
 import android.os.Looper;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 
-import com.example.gmap_v_01_2.model.users.UserDocument;
+import com.example.gmap_v_01_2.services.firestore.model.UserDocument;
 import com.example.gmap_v_01_2.services.preferencies.DefaultPreferencesService;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class LocationService extends Service {
 
