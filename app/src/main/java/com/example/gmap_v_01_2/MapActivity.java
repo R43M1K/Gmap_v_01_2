@@ -210,7 +210,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                         }
                     });
                     try {
-                        thread.sleep(LOCATION_UPDATE_INTERVAL);
+                        Thread.sleep(LOCATION_UPDATE_INTERVAL);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -236,8 +236,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     GeoPoint location = listInBounds.get(i).getLocation();
                     int followers = listInBounds.get(i).getFollowers();
                     boolean visible = listInBounds.get(i).getVisible();
+                    /*
                     Thread thread = new Thread(new addMarkerRunnable(id, link, username, location, followers, visible, false));
                     thread.start();
+                     */
+                    addMarker(id,link,username,location,followers,visible,false);
                 }
             }
         }else{
@@ -269,11 +272,17 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     }
                 }
                 if(!found) {
+                    /*
                     Thread thread = new Thread(new addMarkerRunnable(listInBounds.get(i).getDocumentid(),
                             listInBounds.get(i).getPicture(), listInBounds.get(i).getUsername(),
                             listInBounds.get(i).getLocation(), listInBounds.get(i).getFollowers(),
                             listInBounds.get(i).getVisible(), false));
                     thread.start();
+                    */
+                    addMarker(listInBounds.get(i).getDocumentid(),
+                            listInBounds.get(i).getPicture(), listInBounds.get(i).getUsername(),
+                            listInBounds.get(i).getLocation(), listInBounds.get(i).getFollowers(),
+                            listInBounds.get(i).getVisible(), false);
                 }
             }
         }
@@ -475,6 +484,63 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 }
 
             }
+        }
+    }
+
+    private void addMarker(String id,String picture, String username, GeoPoint location, int followers, boolean visible, boolean movecamera) {
+        if (visible) {
+            ImageURLProcessing imageURLProcessing = new ImageURLProcessing();
+            imageURLProcessing.execute(picture);
+            try {
+                Bitmap bitmap = imageURLProcessing.get();
+                MarkerOptions markerOptions = new MarkerOptions();
+                Bitmap roundBitMap;
+                Bitmap resizedBitMap;
+                Bitmap userListFragmentBitmap;
+                resizedBitMap = imageProcessing.getResizedBitmap(bitmap, followers); // Resize bitmap
+                roundBitMap = imageProcessing.getCroppedBitmap(resizedBitMap); // Make current bitmap to round type
+                userListFragmentBitmap = imageProcessing.getCroppedBitmap(imageProcessing.getResizedBitmapForUserListFragment(bitmap)); // Make current bitmap for userlist fragment type
+                String userPictureString = imageProcessing.bitmapToString(userListFragmentBitmap); //Convert bitmap to String to send to fragment as param
+                String fullPictureString = imageProcessing.bitmapToString(bitmap);
+
+                //TODO read current location data from shared prefs
+                LatLng userLongLat = new LatLng(1, 1);
+
+                if (location != null) {
+                    userLongLat = new LatLng(location.getLatitude(), location.getLongitude());
+                }
+                markerOptions.position(userLongLat);
+                markerOptions.icon(BitmapDescriptorFactory.fromBitmap(roundBitMap));
+                String userFollowers = followersProcessing.instagramFollowersType(followers);
+                markerOptions.title(username + " : " + userFollowers + " Followers");
+                LatLng finalUserLongLat = userLongLat;
+                iHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        mMap.setMinZoomPreference(18f); // User cannot zoom out of 18 zoom distance
+                        Marker marker = mMap.addMarker(markerOptions); // Adding marker on map.
+                        Markers markers = new Markers();
+                        markers.setDocumentId(id);
+                        markers.setMarkerId(marker.getId());
+                        markers.setMarker(marker);
+                        markerList.add(markers);
+                        if (movecamera) {
+                            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(finalUserLongLat, 19f)); // Move camera to user location in 19 zoom value
+                        }
+                    }
+                });
+                //Save user params for userList fragment
+                userpictureList.add(userPictureString);
+                usernameList.add(username);
+                userfollowersList.add(userFollowers);
+                userfullpicture.add(fullPictureString);
+
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
         }
     }
 }
