@@ -11,7 +11,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
 import android.widget.Button;
-import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.Toast;
 
@@ -70,7 +69,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     public static GeoPoint location;
     public static String link;
     public static int followers;
-    public static boolean visibility = true;
+    public static boolean visible = true;
     public String documentID;
 
     //Constants
@@ -170,7 +169,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         userDocument.setUsername(instagramUsername);
         userDocument.setPicture("https://image.freepik.com/free-vector/abstract-dynamic-pattern-wallpaper-vector_53876-59131.jpg");
         userDocument.setFollowers(5478);
-        userDocument.setVisible(true);
+        userDocument.setVisible(visible);
         if(userDocument.getLocation() == null) {
 
             String longitudePrefs = defaultPreferencesService.get(SHARED_LONGITUDE,"");
@@ -198,7 +197,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             while(true) {
                 double longitude = Double.valueOf(defaultPreferencesService.get(SHARED_LONGITUDE, ""));
                 double latitude = Double.valueOf(defaultPreferencesService.get(SHARED_LATITUDE, ""));
-                userDocument.setVisible(visibility);
+                userDocument.setVisible(MapActivity.visible);
                 userDocument.setLocation(new GeoPoint(latitude, longitude));
                 firestoreService.findUserById(new OnUserDocumentReady() {
                     @Override
@@ -226,14 +225,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             }
         });
         loaderThread.start();
-        //startLocationUpdates();
     }
 
     private void loadMarkers() {
-        userpictureList.clear();
-        usernameList.clear();
-        userfollowersList.clear();
-        userfullpicture.clear();
+
         listInBounds = firestoreService.getInBoundUsers(mMap);
         if(markerList.isEmpty()){
             if(!listInBounds.isEmpty()) {
@@ -258,13 +253,21 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 boolean found = false;
                 for(int j=0; j<listInBounds.size(); j++) {
                     if(markerList.get(i).getDocumentId().equals(listInBounds.get(j).getDocumentid())) {
-                        found = true;
-                        markerListTemp.add(markerList.get(i));
+                        if(listInBounds.get(j).getVisible()){
+                            found = true;
+                            markerListTemp.add(markerList.get(i));
+                        }else{
+                            found = false;
+                        }
                         break;
                     }
                 }
                 if(!found) {
                     markerList.get(i).getMarker().remove();
+                    userpictureList.remove(i);
+                    usernameList.remove(i);
+                    userfollowersList.remove(i);
+                    userfullpicture.remove(i);
                 }
             }
             markerList.clear();
@@ -329,9 +332,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         Switch aSwitch = findViewById(R.id.visibleSwitch);
         aSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
-                visibility = true;
+                visible = true;
             } else {
-                visibility = false;
+                visible = false;
             }
         });
     }

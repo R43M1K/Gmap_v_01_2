@@ -57,7 +57,7 @@ public class UserFirestoreService implements UserService {
         user.put("location", userDocument.getLocation());
         user.put("picture", userDocument.getPicture());
         user.put("followers", userDocument.getFollowers());
-        user.put("visibility", userDocument.getVisible());
+        user.put("visible", userDocument.getVisible());
         firestore.collection(TABLE_NAME).add(user).addOnSuccessListener(documentReference -> {
             preferences.put(SHARED_DOCUMENT_ID, documentReference.getId());
             Log.d(TAG, "User added to Firebase");
@@ -71,7 +71,7 @@ public class UserFirestoreService implements UserService {
         user.put("location", userDocument.getLocation());
         user.put("picture", userDocument.getPicture());
         user.put("followers", userDocument.getFollowers());
-        user.put("visibility", userDocument.getVisible());
+        user.put("visible", userDocument.getVisible());
 
         String documentPath = preferences.get(SHARED_DOCUMENT_ID,"");
 
