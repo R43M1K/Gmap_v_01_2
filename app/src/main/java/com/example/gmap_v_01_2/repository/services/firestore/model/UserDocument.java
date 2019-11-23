@@ -1,4 +1,4 @@
-package com.example.gmap_v_01_2.services.firestore.model;
+package com.example.gmap_v_01_2.repository.services.firestore.model;
 
 import com.google.firebase.firestore.GeoPoint;
 

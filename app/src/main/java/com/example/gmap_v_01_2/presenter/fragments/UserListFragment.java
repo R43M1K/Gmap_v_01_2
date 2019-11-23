@@ -1,27 +1,22 @@
-package com.example.gmap_v_01_2.fragments;
+package com.example.gmap_v_01_2.presenter.fragments;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.GestureDetector;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
-import android.widget.RelativeLayout;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.gmap_v_01_2.OnSwipeTouchListener;
 import com.example.gmap_v_01_2.R;
-import com.example.gmap_v_01_2.recyclerview.UserAdapter;
-import com.example.gmap_v_01_2.recyclerview.User_Item;
+import com.example.gmap_v_01_2.presenter.recyclerview.UserAdapter;
+import com.example.gmap_v_01_2.presenter.recyclerview.User_Item;
 
 import java.util.ArrayList;
 import java.util.List;

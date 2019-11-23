@@ -1,4 +1,4 @@
-package com.example.gmap_v_01_2.checker;
+package com.example.gmap_v_01_2.repository;
 
 import android.app.Activity;
 import android.app.Dialog;
@@ -10,23 +10,18 @@ import android.net.NetworkInfo;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 
-public final class CheckerV {
-
-    private CheckerV() {}
+public class ProvideInternetGpsServicesStateRepo implements ProvideConnectionsStateRepo {
 
     private static final int ERROR_DIALOG_REQUEST = 9001;
 
-    //RETURN TRUE IF GPS IS ENABLED, RETURN FALSE IF GPS IS DISABLED
-    public boolean checkGPS(Context context){
+    private Context context;
 
-        LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-
-        return locationManager != null && locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+    public ProvideInternetGpsServicesStateRepo(Context context) {
+        this.context = context;
     }
 
-    //RETURN TRUE IF WIFI OR MOBILE INTERNET ARE ENABLED, OTHERWISE RETURN FALSE
-    public boolean checkINTERNET(Context context){
-
+    @Override
+    public boolean checkInternet() {
         boolean isWiFiEnabled = false;
         boolean isMobileEnabled = false;
         ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -46,10 +41,15 @@ public final class CheckerV {
         return isWiFiEnabled || isMobileEnabled;
     }
 
+    @Override
+    public boolean checkGps() {
+        LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
 
-    //RETURN TRUE IF GOOGLE PLAY SERVICES ARE CORRECT, OTHERWISE RETURN FALSE
-    public boolean checkServices(Context context) {
+        return locationManager != null && locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+    }
 
+    @Override
+    public boolean checkServices() {
         int available = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(context);
 
         if (available == ConnectionResult.SUCCESS) {
@@ -60,5 +60,4 @@ public final class CheckerV {
         }
         return false;
     }
-
 }

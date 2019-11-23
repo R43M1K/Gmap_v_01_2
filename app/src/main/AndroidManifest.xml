@@ -22,16 +22,16 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyD4jofJcey_3cKRld7AVQ1b2TKxIdsBgIE" />
 
-        <activity android:name=".MainActivity">
+        <activity android:name=".presenter.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".MapActivity"/>
+        <activity android:name=".presenter.MapActivity"/>
 
-        <service android:name=".services.location.LocationService"
+        <service android:name=".repository.services.location.LocationService"
             android:stopWithTask="true"/>
     </application>
 

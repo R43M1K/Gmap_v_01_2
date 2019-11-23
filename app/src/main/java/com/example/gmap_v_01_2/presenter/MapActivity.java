@@ -1,4 +1,4 @@
-package com.example.gmap_v_01_2;
+package com.example.gmap_v_01_2.presenter;
 
 
 import android.Manifest;
@@ -11,7 +11,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
 import android.widget.Button;
-import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.Toast;
 
@@ -24,19 +23,20 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.example.gmap_v_01_2.R;
 import com.example.gmap_v_01_2.editor.FollowerProcessing;
 import com.example.gmap_v_01_2.editor.ImageProcessing;
 import com.example.gmap_v_01_2.editor.ImageURLProcessing;
-import com.example.gmap_v_01_2.fragments.UserListFragment;
-import com.example.gmap_v_01_2.fragments.UserPhotoViewerFragment;
-import com.example.gmap_v_01_2.model.users.Markers;
-import com.example.gmap_v_01_2.model.users.UserDocumentAll;
-import com.example.gmap_v_01_2.services.firestore.OnUserDocumentReady;
-import com.example.gmap_v_01_2.services.firestore.UserFirestoreService;
-import com.example.gmap_v_01_2.services.firestore.UserService;
-import com.example.gmap_v_01_2.services.location.LocationService;
-import com.example.gmap_v_01_2.services.firestore.model.UserDocument;
-import com.example.gmap_v_01_2.services.preferencies.DefaultPreferencesService;
+import com.example.gmap_v_01_2.presenter.fragments.UserListFragment;
+import com.example.gmap_v_01_2.presenter.fragments.UserPhotoViewerFragment;
+import com.example.gmap_v_01_2.repository.model.users.Markers;
+import com.example.gmap_v_01_2.repository.model.users.UserDocumentAll;
+import com.example.gmap_v_01_2.repository.services.firestore.OnUserDocumentReady;
+import com.example.gmap_v_01_2.repository.services.firestore.UserFirestoreService;
+import com.example.gmap_v_01_2.repository.services.firestore.UserService;
+import com.example.gmap_v_01_2.repository.services.location.LocationService;
+import com.example.gmap_v_01_2.repository.services.firestore.model.UserDocument;
+import com.example.gmap_v_01_2.repository.services.preferencies.DefaultPreferencesService;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -174,11 +174,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         if(userDocument.getLocation() == null) {
 
             String longitudePrefs = defaultPreferencesService.get(SHARED_LONGITUDE,"");
-            longitudePrefs = longitudePrefs == null? "0": longitudePrefs;
+            longitudePrefs = longitudePrefs == null || longitudePrefs.isEmpty()? "0": longitudePrefs;
             double longitude = Double.valueOf(longitudePrefs);
 
             String latitudePrefs = defaultPreferencesService.get(SHARED_LATITUDE, "");
-            latitudePrefs = latitudePrefs == null? "0": latitudePrefs;
+            latitudePrefs = latitudePrefs == null || latitudePrefs.isEmpty()? "0": latitudePrefs;
             double latitude = Double.valueOf(latitudePrefs);
 
             userDocument.setLocation(new GeoPoint(latitude, longitude));
@@ -196,8 +196,15 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
         Thread loaderThread = new Thread(() -> {
             while(true) {
-                double longitude = Double.valueOf(defaultPreferencesService.get(SHARED_LONGITUDE, ""));
-                double latitude = Double.valueOf(defaultPreferencesService.get(SHARED_LATITUDE, ""));
+
+                String longitudePrefs = defaultPreferencesService.get(SHARED_LONGITUDE, "");
+                longitudePrefs = longitudePrefs == null || longitudePrefs.isEmpty()? "0": longitudePrefs;
+                double longitude = Double.valueOf(longitudePrefs);
+
+                String latitudePrefs = defaultPreferencesService.get(SHARED_LATITUDE, "");
+                latitudePrefs = latitudePrefs == null || latitudePrefs.isEmpty()? "0": latitudePrefs;
+                double latitude = Double.valueOf(latitudePrefs);
+
                 userDocument.setVisible(visibility);
                 userDocument.setLocation(new GeoPoint(latitude, longitude));
                 firestoreService.findUserById(new OnUserDocumentReady() {

@@ -1,17 +1,13 @@
-package com.example.gmap_v_01_2.recyclerview;
+package com.example.gmap_v_01_2.presenter.recyclerview;
 
 import android.graphics.Bitmap;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ImageView;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.gmap_v_01_2.R;

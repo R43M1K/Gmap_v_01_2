@@ -1,4 +1,4 @@
-package com.example.gmap_v_01_2.fragments;
+package com.example.gmap_v_01_2.presenter.fragments;
 
 import android.content.Context;
 import android.os.Bundle;

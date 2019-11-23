@@ -1,4 +1,4 @@
-package com.example.gmap_v_01_2.services.preferencies;
+package com.example.gmap_v_01_2.repository.services.preferencies;
 
 import android.content.Context;
 import android.content.SharedPreferences;

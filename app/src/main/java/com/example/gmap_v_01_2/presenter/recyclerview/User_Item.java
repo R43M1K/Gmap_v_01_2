@@ -1,4 +1,4 @@
-package com.example.gmap_v_01_2.recyclerview;
+package com.example.gmap_v_01_2.presenter.recyclerview;
 
 public class User_Item {
 
