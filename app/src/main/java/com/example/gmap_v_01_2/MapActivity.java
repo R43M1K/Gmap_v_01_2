@@ -249,13 +249,20 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         }else{
             //Remove from markerList those markers which don't exist anymore
             ArrayList<Markers> markerListTemp = new ArrayList<>();
+            ArrayList<Integer> removable = new ArrayList<>();
             for(int i=0; i<markerList.size(); i++) {
                 boolean found = false;
                 for(int j=0; j<listInBounds.size(); j++) {
                     if(markerList.get(i).getDocumentId().equals(listInBounds.get(j).getDocumentid())) {
                         if(listInBounds.get(j).getVisible()){
-                            found = true;
-                            markerListTemp.add(markerList.get(i));
+                            double longitude = markerList.get(i).getLatLng().longitude;
+                            double latitude = markerList.get(i).getLatLng().latitude;
+                            if(longitude == listInBounds.get(j).getLocation().getLongitude() && latitude == listInBounds.get(j).getLocation().getLatitude()) {
+                                found = true;
+                                markerListTemp.add(markerList.get(i));
+                            }else{
+                                found = false;
+                            }
                         }else{
                             found = false;
                         }
@@ -264,14 +271,21 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 }
                 if(!found) {
                     markerList.get(i).getMarker().remove();
-                    userpictureList.remove(i);
-                    usernameList.remove(i);
-                    userfollowersList.remove(i);
-                    userfullpicture.remove(i);
+                    removable.add(i);
                 }
             }
             markerList.clear();
             markerList = markerListTemp;
+            for(int i=0; i<removable.size(); i++) {
+                int myIndex = removable.get(i);
+                if(myIndex != 0) {
+                    myIndex--;
+                }
+                userpictureList.remove(myIndex);
+                usernameList.remove(myIndex);
+                userfollowersList.remove(myIndex);
+                userfullpicture.remove(myIndex);
+            }
 
             //Add markers from Firebase, if they do not exist on map
             for(int i = 0; i < listInBounds.size(); i++) {
@@ -469,6 +483,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                         Marker marker = mMap.addMarker(markerOptions); // Adding marker on map.
                         Markers markers = new Markers();
                         markers.setDocumentId(id);
+                        markers.setLatLng(finalUserLongLat);
                         markers.setMarkerId(marker.getId());
                         markers.setMarker(marker);
                         markerList.add(markers);
@@ -524,6 +539,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     Marker marker = mMap.addMarker(markerOptions); // Adding marker on map.
                     Markers markers = new Markers();
                     markers.setDocumentId(id);
+                    markers.setLatLng(finalUserLongLat);
                     markers.setMarkerId(marker.getId());
                     markers.setMarker(marker);
                     markerList.add(markers);
