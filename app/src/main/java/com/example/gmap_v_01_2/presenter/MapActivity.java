@@ -22,6 +22,8 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProviders;
 
 import com.example.gmap_v_01_2.R;
 import com.example.gmap_v_01_2.editor.FollowerProcessing;
@@ -49,6 +51,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.firestore.GeoPoint;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 
 public class MapActivity extends AppCompatActivity implements OnMapReadyCallback , UserListFragment.OnFragmentInteractionListener , UserPhotoViewerFragment.OnPhotoFragmentInteractionListener {
@@ -97,6 +100,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     UserService firestoreService;
     UserDocument userDocument;
 
+    private ViewModelProviderFactory factory;
+    private MapViewModel mapViewModel;
+
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -106,6 +112,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         defaultPreferencesService = DefaultPreferencesService.getInstance(getBaseContext());
         userDocument = new UserDocument();
         firestoreService = UserFirestoreService.getInstance(getBaseContext());
+        factory = new ViewModelProviderFactory(getApplicationContext());
+        mapViewModel = ViewModelProviders.of(this, factory).get(MapViewModel.class);
         getLocationPermission();
         startLocationService();
     }
@@ -237,87 +245,66 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     private void loadMarkers() {
         listInBounds = firestoreService.getInBoundUsers(mMap);
-        if(markerList.isEmpty()){
-            if(!listInBounds.isEmpty()) {
-                for(int i=0; i<listInBounds.size(); i++) {
-                    String id = listInBounds.get(i).getDocumentid();
-                    String link = listInBounds.get(i).getPicture();
-                    String username = listInBounds.get(i).getUsername();
-                    GeoPoint location = listInBounds.get(i).getLocation();
-                    int followers = listInBounds.get(i).getFollowers();
-                    boolean visible = listInBounds.get(i).getVisible();
-                    /*
-                    Thread thread = new Thread(new AddMarkerRunnable(id, link, username, location, followers, visible, false));
-                    thread.start();
-                     */
-                    addMarker(id,link,username,location,followers,visible,false);
-                }
-            }
-        }else{
-            //Remove from markerList those markers which don't exist anymore
-            ArrayList<Markers> markerListTemp = new ArrayList<>();
-            ArrayList<Integer> removable = new ArrayList<>();
-            for(int i=0; i<markerList.size(); i++) {
-                boolean found = false;
-                for(int j=0; j<listInBounds.size(); j++) {
-                    if(markerList.get(i).getDocumentId().equals(listInBounds.get(j).getDocumentid())) {
-                        if(listInBounds.get(j).getVisible()){
-                            double longitude = markerList.get(i).getLatLng().longitude;
-                            double latitude = markerList.get(i).getLatLng().latitude;
-                            if(longitude == listInBounds.get(j).getLocation().getLongitude() && latitude == listInBounds.get(j).getLocation().getLatitude()) {
-                                found = true;
-                                markerListTemp.add(markerList.get(i));
-                            }else{
-                                found = false;
+        mapViewModel.checkRemovableMarkers(markerList, listInBounds);
+        mapViewModel.getRemovableArray().observe(this, new Observer<ArrayList<Integer>>() {
+            @Override
+            public void onChanged(ArrayList<Integer> arrayList) {
+                if(arrayList != null && !arrayList.isEmpty()) {
+                    for(int i=0; i<arrayList.size(); i++) {
+                        if(arrayList.get(i) == 0) {
+                            int myIndex = arrayList.get(i);
+                            if(myIndex != 0) {
+                                myIndex--;
                             }
-                        }else{
-                            found = false;
+                            userpictureList.remove(myIndex);
+                            usernameList.remove(myIndex);
+                            userfollowersList.remove(myIndex);
+                            userfullpicture.remove(myIndex);
                         }
-                        break;
                     }
                 }
-                if(!found) {
-                    markerList.get(i).getMarker().remove();
-                    removable.add(i);
-                }
             }
-            markerList.clear();
-            markerList = markerListTemp;
-            for(int i=0; i<removable.size(); i++) {
-                int myIndex = removable.get(i);
-                if(myIndex != 0) {
-                    myIndex--;
-                }
-                userpictureList.remove(myIndex);
-                usernameList.remove(myIndex);
-                userfollowersList.remove(myIndex);
-                userfullpicture.remove(myIndex);
-            }
-
-            //Add markers from Firebase, if they do not exist on map
-            for(int i = 0; i < listInBounds.size(); i++) {
-                boolean found = false;
-                for(int j = 0; j<markerList.size(); j++) {
-                    if(listInBounds.get(i).getDocumentid().equals(markerList.get(j).getDocumentId())) {
-                        found = true;
-                        break;
+        });
+        mapViewModel.checkAddableMarkers(markerList, listInBounds);
+        mapViewModel.getAddableArray().observe(this, new Observer<ArrayList<UserDocumentAll>>() {
+            @Override
+            public void onChanged(ArrayList<UserDocumentAll> arrayList) {
+                if(arrayList != null && !arrayList.isEmpty()) {
+                    for (int i = 0; i < arrayList.size(); i++) {
+                        String id = arrayList.get(i).getDocumentid();
+                        String link = arrayList.get(i).getPicture();
+                        String username = arrayList.get(i).getUsername();
+                        GeoPoint location = arrayList.get(i).getLocation();
+                        int followers = arrayList.get(i).getFollowers();
+                        boolean visible = arrayList.get(i).getVisible();
+                        mapViewModel.addMarker(id, username, link, location, followers, visible, false);
+                        mapViewModel.getMarker().observe(MapActivity.this, new Observer<HashMap>() {
+                            @Override
+                            public void onChanged(HashMap hashMap) {
+                                iHandler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        mMap.setMinZoomPreference(18f); // User cannot zoom out of 18 zoom distance
+                                        Marker marker = mMap.addMarker((MarkerOptions) hashMap.get("markerOptions")); // Adding marker on map.
+                                        Markers markers = new Markers();
+                                        markers.setDocumentId((String) hashMap.get("documentId"));
+                                        markers.setLatLng((LatLng) hashMap.get("LongLat"));
+                                        markers.setMarkerId(marker.getId());
+                                        markers.setMarker(marker);
+                                        markerList.add(markers);
+                                        //Save user params for userList fragment
+                                        userpictureList.add((String) hashMap.get("userPictureAsString"));
+                                        usernameList.add((String) hashMap.get("userName"));
+                                        userfollowersList.add((String) hashMap.get("userFollowers"));
+                                        userfullpicture.add((String) hashMap.get("fullPictureAsString"));
+                                    }
+                                });
+                            }
+                        });
                     }
                 }
-                if(!found) {
-                    /*
-                    Thread thread = new Thread(new AddMarkerRunnable(listInBounds.get(i).getDocumentid(),
-                            listInBounds.get(i).getPicture(), listInBounds.get(i).getUsername(),
-                            listInBounds.get(i).getLocation(), listInBounds.get(i).getFollowers(),
-                            listInBounds.get(i).getVisible(), false));
-                    thread.start();
-                    */
-                    addMarker(listInBounds.get(i).getDocumentid(),
-                            listInBounds.get(i).getPicture(), listInBounds.get(i).getUsername(),
-                            listInBounds.get(i).getLocation(), listInBounds.get(i).getFollowers(),
-                            listInBounds.get(i).getVisible(), false);
-                }
             }
-        }
+        });
     }
 
     //START BACKGROUND SERVICE THAT GET USER LOCATION WHEN IT'S CHANGED AND WRITE TO FIREBASE
