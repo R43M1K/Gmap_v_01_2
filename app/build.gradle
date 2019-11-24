@@ -39,6 +39,7 @@ dependencies {
     implementation platform('com.google.firebase:firebase-bom:22.3.0')
     implementation 'com.google.firebase:firebase-firestore'
     implementation 'com.android.support:multidex:1.0.3'
+    implementation 'androidx.lifecycle:lifecycle-extensions:2.1.0'
 
 }
 

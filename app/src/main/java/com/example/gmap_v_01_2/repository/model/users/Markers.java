@@ -1,4 +1,4 @@
-package com.example.gmap_v_01_2.model.users;
+package com.example.gmap_v_01_2.repository.model.users;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;

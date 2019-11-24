@@ -1,4 +1,4 @@
-package com.example.gmap_v_01_2;
+package com.example.gmap_v_01_2.presenter;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -8,6 +8,8 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProviders;
 
 import android.Manifest;
 import android.content.DialogInterface;
@@ -17,8 +19,8 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.widget.Toast;
 
-import com.example.gmap_v_01_2.checker.CheckerV;
-import com.example.gmap_v_01_2.fragments.FrontMapFragment;
+import com.example.gmap_v_01_2.R;
+import com.example.gmap_v_01_2.presenter.fragments.FrontMapFragment;
 import com.google.android.gms.location.FusedLocationProviderClient;
 
 
@@ -34,48 +36,66 @@ public class MainActivity extends AppCompatActivity implements FrontMapFragment.
     private Boolean mLocationPermissionsGranted = false;
     private FusedLocationProviderClient mFusedLocationProviderClient;
 
+    private ViewModelProviderFactory factory;
+    private MainViewModel mainViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        factory = new ViewModelProviderFactory(getApplicationContext());
+        mainViewModel = ViewModelProviders.of(this, factory).get(MainViewModel.class);
+
         setContentView(R.layout.activity_main);
         getLocationPermission();
-        if(checkConnections()){
-            Intent intent = new Intent(MainActivity.this,MapActivity.class);
-            startActivity(intent);
-        }else{
-            callFragment();
-        }
-
+        checkConnections();
     }
 
-    //CHECK GOOGLEPLAYS,GPS,INTERNET
-    private boolean checkConnections(){
-        if(!CheckerV.checkGPS(this)){
-            Toast.makeText(this,"GPS DISABLED",Toast.LENGTH_SHORT).show();
-        }
-        if(!CheckerV.checkINTERNET(this)){
-            Toast.makeText(this,"INTERNET DISABLED", Toast.LENGTH_SHORT).show();
-        }
-        if(!CheckerV.checkServices(this)){
-            Toast.makeText(this,"GOOGLEPLAY SERVICES ERROR",Toast.LENGTH_SHORT).show();
-        }
-        return (CheckerV.checkINTERNET(this) && CheckerV.checkGPS(this) && CheckerV.checkServices(this));
+    //CHECK GOOGLE PLAYS,GPS,INTERNET
+    private void checkConnections(){
+        mainViewModel.checkConnections();
+
+        mainViewModel.getConnectionsStateLiveData().observe(this, state -> {
+            if(state) {
+                Intent intent = new Intent(MainActivity.this, MapActivity.class);
+                startActivity(intent);
+            } else {
+                callFragment();
+            }
+        });
+
+        mainViewModel.getConnectionsStateOnFragmentInteractLiveData().observe(this, state -> {
+            if(state) {
+                //TODO move to Fragment navigation controller
+                FragmentManager fragmentManager = getSupportFragmentManager();
+                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+                fragmentTransaction.hide(fragment);
+                fragmentTransaction.addToBackStack(null);
+                fragmentTransaction.commit();
+
+                //TODO move to Activity navigation controller
+                Intent intent = new Intent(MainActivity.this, MapActivity.class);
+                startActivity(intent);
+            } else {
+                callFragment();
+            }
+        });
+
+        mainViewModel.getShowAlertLiveData().observe(this, obj -> buildAlertMessagesNoGPS());
     }
 
     //CHECK PERMISSION FOR LOCATION GOOGLE MAP
     private void getLocationPermission(){
-        String[] permissions = {Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION};
+        String[] permissions = {FINE_LOCATION,COARSE_LOCATION};
+        mainViewModel.checkPermissions();
 
-        if(ContextCompat.checkSelfPermission(this,FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
-            if(ContextCompat.checkSelfPermission(this,COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED){
+        mainViewModel.getPermissionsStateLiveData().observe(this, aBoolean -> {
+            if(aBoolean) {
                 mLocationPermissionsGranted = true;
             }else{
                 ActivityCompat.requestPermissions(this,permissions,LOCATION_PERMISSION_REQUEST_CODE);
             }
-        }else{
-            ActivityCompat.requestPermissions(this,permissions,LOCATION_PERMISSION_REQUEST_CODE);
-        }
+        });
     }
 
 
@@ -117,7 +137,6 @@ public class MainActivity extends AppCompatActivity implements FrontMapFragment.
 
     //ADD FRAGMENT TO ACTIVITY
     private void callFragment(){
-
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction.setCustomAnimations(R.anim.fade_in,R.anim.fade_out);
@@ -130,21 +149,8 @@ public class MainActivity extends AppCompatActivity implements FrontMapFragment.
     //THIS METHOD INDICATES THAT BUTTON OF FRAGMENT IS PRESSED
     @Override
     public void onFragmentInteraction(Boolean bool) {
-
-        if((CheckerV.checkINTERNET(this) && CheckerV.checkGPS(this) && CheckerV.checkServices(this))){
-            FragmentManager fragmentManager = getSupportFragmentManager();
-            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-            fragmentTransaction.hide(fragment);
-            fragmentTransaction.addToBackStack(null);
-            fragmentTransaction.commit();
-            Intent intent = new Intent(MainActivity.this,MapActivity.class);
-            startActivity(intent);
-        }else{
-           if(!CheckerV.checkGPS(this)){
-               buildAlertMessagesNoGPS();
-           }else if(!CheckerV.checkINTERNET(this)){
-               Toast.makeText(this,"No Internet Connection",Toast.LENGTH_SHORT).show();
-           }
+        if(bool) {
+            mainViewModel.checkFragmentConnections();
         }
     }
 

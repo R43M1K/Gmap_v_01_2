@@ -1,7 +1,7 @@
-package com.example.gmap_v_01_2.services.firestore;
+package com.example.gmap_v_01_2.repository.services.firestore;
 
-import com.example.gmap_v_01_2.model.users.UserDocumentAll;
-import com.example.gmap_v_01_2.services.firestore.model.UserDocument;
+import com.example.gmap_v_01_2.repository.model.users.UserDocumentAll;
+import com.example.gmap_v_01_2.repository.services.firestore.model.UserDocument;
 import com.google.android.gms.maps.GoogleMap;
 
 import java.util.ArrayList;
