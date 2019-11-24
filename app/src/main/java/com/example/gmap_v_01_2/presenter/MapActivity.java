@@ -84,6 +84,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private final String SHARED_FOLLOWERS = "Followers";
 
     //vars to send to fragment
+    //TODO provide to use case viea repo(use in memory cache)
     private ArrayList<String> usernameList = new ArrayList<>();
     private ArrayList<String> userpictureList = new ArrayList<>();
     private ArrayList<String> userfollowersList = new ArrayList<>();
@@ -171,6 +172,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         visibleChecker();
         openUserList();
         readDocFromFirebase();
+
+        mMap.setMinZoomPreference(18f); // User cannot zoom out of 18 zoom distance
     }
     //USE THIS METHOD TO GET ALL USERS INFORMATION, THEN ADD MARKERS IN CURRENT AREA
     private void readDocFromFirebase() {
@@ -246,62 +249,48 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private void loadMarkers() {
         listInBounds = firestoreService.getInBoundUsers(mMap);
         mapViewModel.checkRemovableMarkers(markerList, listInBounds);
-        mapViewModel.getRemovableArray().observe(this, new Observer<ArrayList<Integer>>() {
-            @Override
-            public void onChanged(ArrayList<Integer> arrayList) {
-                if(arrayList != null && !arrayList.isEmpty()) {
-                    for(int i=0; i<arrayList.size(); i++) {
-                        if(arrayList.get(i) == 0) {
-                            int myIndex = arrayList.get(i);
-                            if(myIndex != 0) {
-                                myIndex--;
-                            }
-                            userpictureList.remove(myIndex);
-                            usernameList.remove(myIndex);
-                            userfollowersList.remove(myIndex);
-                            userfullpicture.remove(myIndex);
+        mapViewModel.getRemovableArray().observe(this, arrayList -> {
+            //TODO move to use case
+            if(arrayList != null && !arrayList.isEmpty()) {
+                for(int i=0; i<arrayList.size(); i++) {
+                    if(arrayList.get(i) == 0) {
+                        int myIndex = arrayList.get(i);
+                        if(myIndex != 0) {
+                            myIndex--;
                         }
+                        userpictureList.remove(myIndex);
+                        usernameList.remove(myIndex);
+                        userfollowersList.remove(myIndex);
+                        userfullpicture.remove(myIndex);
                     }
                 }
             }
         });
         mapViewModel.checkAddableMarkers(markerList, listInBounds);
-        mapViewModel.getAddableArray().observe(this, new Observer<ArrayList<UserDocumentAll>>() {
-            @Override
-            public void onChanged(ArrayList<UserDocumentAll> arrayList) {
-                if(arrayList != null && !arrayList.isEmpty()) {
-                    for (int i = 0; i < arrayList.size(); i++) {
-                        String id = arrayList.get(i).getDocumentid();
-                        String link = arrayList.get(i).getPicture();
-                        String username = arrayList.get(i).getUsername();
-                        GeoPoint location = arrayList.get(i).getLocation();
-                        int followers = arrayList.get(i).getFollowers();
-                        boolean visible = arrayList.get(i).getVisible();
-                        mapViewModel.addMarker(id, username, link, location, followers, visible, false);
-                        mapViewModel.getMarker().observe(MapActivity.this, new Observer<HashMap>() {
-                            @Override
-                            public void onChanged(HashMap hashMap) {
-                                iHandler.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        mMap.setMinZoomPreference(18f); // User cannot zoom out of 18 zoom distance
-                                        Marker marker = mMap.addMarker((MarkerOptions) hashMap.get("markerOptions")); // Adding marker on map.
-                                        Markers markers = new Markers();
-                                        markers.setDocumentId((String) hashMap.get("documentId"));
-                                        markers.setLatLng((LatLng) hashMap.get("LongLat"));
-                                        markers.setMarkerId(marker.getId());
-                                        markers.setMarker(marker);
-                                        markerList.add(markers);
-                                        //Save user params for userList fragment
-                                        userpictureList.add((String) hashMap.get("userPictureAsString"));
-                                        usernameList.add((String) hashMap.get("userName"));
-                                        userfollowersList.add((String) hashMap.get("userFollowers"));
-                                        userfullpicture.add((String) hashMap.get("fullPictureAsString"));
-                                    }
-                                });
-                            }
-                        });
-                    }
+        mapViewModel.getAddableArray().observe(this, arrayList -> {
+            if(arrayList != null && !arrayList.isEmpty()) {
+                for (int i = 0; i < arrayList.size(); i++) {
+                    String id = arrayList.get(i).getDocumentid();
+                    String link = arrayList.get(i).getPicture();
+                    String username = arrayList.get(i).getUsername();
+                    GeoPoint location = arrayList.get(i).getLocation();
+                    int followers = arrayList.get(i).getFollowers();
+                    boolean visible = arrayList.get(i).getVisible();
+                    mapViewModel.addMarker(id, username, link, location, followers, visible, false);
+                    mapViewModel.getMarker().observe(MapActivity.this, hashMap -> iHandler.post(() -> {
+                        Marker marker = mMap.addMarker((MarkerOptions) hashMap.get("markerOptions")); // Adding marker on map.
+                        Markers markers = new Markers();
+                        markers.setDocumentId((String) hashMap.get("documentId"));
+                        markers.setLatLng((LatLng) hashMap.get("LongLat"));
+                        markers.setMarkerId(marker.getId());
+                        markers.setMarker(marker);
+                        markerList.add(markers);
+                        //Save user params for userList fragment
+                        userpictureList.add((String) hashMap.get("userPictureAsString"));
+                        usernameList.add((String) hashMap.get("userName"));
+                        userfollowersList.add((String) hashMap.get("userFollowers"));
+                        userfullpicture.add((String) hashMap.get("fullPictureAsString"));
+                    }));
                 }
             }
         });
@@ -554,5 +543,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             }
 
         }
+    }
+
+    public MapViewModel getMapViewModel() {
+        return mapViewModel;
     }
 }

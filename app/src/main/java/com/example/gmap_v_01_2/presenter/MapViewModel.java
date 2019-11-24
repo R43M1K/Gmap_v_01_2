@@ -7,8 +7,6 @@ import androidx.lifecycle.ViewModel;
 import com.example.gmap_v_01_2.business.CheckMarkersUseCase;
 import com.example.gmap_v_01_2.repository.model.users.Markers;
 import com.example.gmap_v_01_2.repository.model.users.UserDocumentAll;
-import com.example.gmap_v_01_2.repository.services.firestore.model.UserDocument;
-import com.google.android.gms.maps.model.Marker;
 import com.google.firebase.firestore.GeoPoint;
 
 import java.util.ArrayList;
@@ -27,6 +25,7 @@ public class MapViewModel extends ViewModel {
 
     //Remove
     public void checkRemovableMarkers(ArrayList<Markers> markerList, ArrayList<UserDocumentAll> listInBounds) {
+        //TODO after checkMarkersUseCase.markersToBeRemoved(markerList, listInBounds) use array list in other use case to remove markers
         removableList.setValue(checkMarkersUseCase.markersToBeRemoved(markerList, listInBounds));
     }
 
@@ -46,6 +45,7 @@ public class MapViewModel extends ViewModel {
 
     //Add Marker
 
+    //TODO userLocation GeoPoint -> to pojo
     public void addMarker(String documentId, String userName, String userPicture, GeoPoint userLocatoin, int userFollowers, boolean userVisible, boolean moveCamera) {
         marker.setValue(checkMarkersUseCase.addMarker(documentId,userName,userPicture,userLocatoin,userFollowers,userVisible,moveCamera));
     }

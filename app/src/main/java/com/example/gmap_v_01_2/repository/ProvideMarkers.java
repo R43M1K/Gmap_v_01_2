@@ -111,6 +111,7 @@ public class ProvideMarkers implements ProvideMarkersStateRepo {
         return null;
     }
 
+    //TODO userLocation pojo -> to GeoPoint
     @Override
     public HashMap addMarker(String documentId, String userName, String userPicture, GeoPoint userLocation, int userFollowers, boolean userVisible, boolean moveCamera) {
             if (userVisible) {

@@ -15,6 +15,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.gmap_v_01_2.OnSwipeTouchListener;
 import com.example.gmap_v_01_2.R;
+import com.example.gmap_v_01_2.presenter.MapActivity;
+import com.example.gmap_v_01_2.presenter.MapViewModel;
 import com.example.gmap_v_01_2.presenter.recyclerview.UserAdapter;
 import com.example.gmap_v_01_2.presenter.recyclerview.User_Item;
 
@@ -30,6 +32,7 @@ public class UserListFragment extends Fragment {
 
 
     private ArrayList<User_Item> useritemsList = new ArrayList<>();
+    private MapViewModel mapViewModel;
 
     private OnFragmentInteractionListener mListener;
     public UserListFragment() {
@@ -102,6 +105,12 @@ public class UserListFragment extends Fragment {
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
+
+        if(context instanceof MapActivity) {
+            MapActivity mapActivity = (MapActivity) context;
+            mapViewModel = mapActivity.getMapViewModel();
+        }
+
         if (context instanceof OnFragmentInteractionListener) {
             mListener = (OnFragmentInteractionListener) context;
         } else {

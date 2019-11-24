@@ -37,7 +37,7 @@ public class ViewModelProviderFactory extends ViewModelProvider.NewInstanceFacto
             CheckPermissions checkPermissions = new CheckPermissions(providePermissionsStateRepo);
 
             return (T) new MainViewModel(checkConnectionsUseCase, checkPermissions);
-        }else if(modelClass.isAssignableFrom(MapViewModel.class)) {
+        } else if(modelClass.isAssignableFrom(MapViewModel.class)) {
 
             ProvideMarkersStateRepo provideMarkersStateRepo = new ProvideMarkers(context);
             CheckMarkersUseCase checkMarkersUseCase = new CheckMarkers(provideMarkersStateRepo);
