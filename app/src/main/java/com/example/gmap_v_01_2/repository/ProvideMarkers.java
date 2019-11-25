@@ -70,8 +70,6 @@ public class ProvideMarkers implements ProvideMarkersStateRepo {
                     removable.add(i);
                 }
             }
-            markerList.clear();
-            markerList = markerListTemp;
             return removable;
         }
         return null;
@@ -79,7 +77,7 @@ public class ProvideMarkers implements ProvideMarkersStateRepo {
 
     @Nullable
     @Override
-    public ArrayList markersToBeAdded(ArrayList<Markers> markerList, ArrayList<UserDocumentAll> listInBounds) {
+    public ArrayList<UserDocumentAll> markersToBeAdded(ArrayList<Markers> markerList, ArrayList<UserDocumentAll> listInBounds) {
         ArrayList<UserDocumentAll> list = new ArrayList<>();
         UserDocumentAll document = new UserDocumentAll();
         if(markerList.isEmpty()) {

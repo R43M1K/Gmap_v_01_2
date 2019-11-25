@@ -90,7 +90,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private ArrayList<String> userfollowersList = new ArrayList<>();
     private ArrayList<String> userfullpicture = new ArrayList<>();
     private ArrayList<Markers> markerList = new ArrayList<>();
-    ArrayList<UserDocumentAll> listInBounds = new ArrayList<>();
+    private ArrayList<UserDocumentAll> listInBounds = new ArrayList<>();
+    private ArrayList<UserDocumentAll> feedback = new ArrayList<>();
 
     //classes
     FollowerProcessing followersProcessing = new FollowerProcessing();
@@ -117,6 +118,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         mapViewModel = ViewModelProviders.of(this, factory).get(MapViewModel.class);
         getLocationPermission();
         startLocationService();
+        loadMarkers();
     }
 
 
@@ -222,7 +224,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     @Override
                     public void onReady(UserDocument document) {
                         firestoreService.updateUser(userDocument);
-                        loadMarkers();
+                        listInBounds = firestoreService.getInBoundUsers(mMap);
+                        mapViewModel.checkRemovableMarkers(markerList, listInBounds);
+                        mapViewModel.checkAddableMarkers(markerList, listInBounds);
                     }
 
                     @Override
@@ -247,29 +251,33 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     private void loadMarkers() {
-        listInBounds = firestoreService.getInBoundUsers(mMap);
-        mapViewModel.checkRemovableMarkers(markerList, listInBounds);
+        ArrayList<Integer> feedbackRemovable = new ArrayList<>();
         mapViewModel.getRemovableArray().observe(this, arrayList -> {
             //TODO move to use case
-            if(arrayList != null && !arrayList.isEmpty()) {
-                for(int i=0; i<arrayList.size(); i++) {
-                    if(arrayList.get(i) == 0) {
+            if(arrayList != null && !arrayList.isEmpty() && markerList != null && !markerList.isEmpty()) {
+                if(!feedbackRemovable.equals(arrayList)) {
+                    for (int i = 0; i < arrayList.size(); i++) {
                         int myIndex = arrayList.get(i);
-                        if(myIndex != 0) {
+                        if (myIndex != 0) {
                             myIndex--;
                         }
+                        markerList.get(myIndex).getMarker().remove();
+                        markerList.remove(myIndex);
                         userpictureList.remove(myIndex);
                         usernameList.remove(myIndex);
                         userfollowersList.remove(myIndex);
                         userfullpicture.remove(myIndex);
+                        feedbackRemovable.add(myIndex);
                     }
                 }
             }
         });
-        mapViewModel.checkAddableMarkers(markerList, listInBounds);
         mapViewModel.getAddableArray().observe(this, arrayList -> {
             if(arrayList != null && !arrayList.isEmpty()) {
+                if(!feedback.equals(arrayList)) {
+                    feedback.clear();
                 for (int i = 0; i < arrayList.size(); i++) {
+                    feedback.add(arrayList.get(i));
                     String id = arrayList.get(i).getDocumentid();
                     String link = arrayList.get(i).getPicture();
                     String username = arrayList.get(i).getUsername();
@@ -278,19 +286,20 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                     boolean visible = arrayList.get(i).getVisible();
                     mapViewModel.addMarker(id, username, link, location, followers, visible, false);
                     mapViewModel.getMarker().observe(MapActivity.this, hashMap -> iHandler.post(() -> {
-                        Marker marker = mMap.addMarker((MarkerOptions) hashMap.get("markerOptions")); // Adding marker on map.
-                        Markers markers = new Markers();
-                        markers.setDocumentId((String) hashMap.get("documentId"));
-                        markers.setLatLng((LatLng) hashMap.get("LongLat"));
-                        markers.setMarkerId(marker.getId());
-                        markers.setMarker(marker);
-                        markerList.add(markers);
-                        //Save user params for userList fragment
-                        userpictureList.add((String) hashMap.get("userPictureAsString"));
-                        usernameList.add((String) hashMap.get("userName"));
-                        userfollowersList.add((String) hashMap.get("userFollowers"));
-                        userfullpicture.add((String) hashMap.get("fullPictureAsString"));
+                            Marker marker = mMap.addMarker((MarkerOptions) hashMap.get("markerOptions")); // Adding marker on map.
+                            Markers markers = new Markers();
+                            markers.setDocumentId((String) hashMap.get("documentId"));
+                            markers.setLatLng((LatLng) hashMap.get("LongLat"));
+                            markers.setMarkerId(marker.getId());
+                            markers.setMarker(marker);
+                            markerList.add(markers);
+                            //Save user params for userList fragment
+                            userpictureList.add((String) hashMap.get("userPictureAsString"));
+                            usernameList.add((String) hashMap.get("userName"));
+                            userfollowersList.add((String) hashMap.get("userFollowers"));
+                            userfullpicture.add((String) hashMap.get("fullPictureAsString"));
                     }));
+                }
                 }
             }
         });
