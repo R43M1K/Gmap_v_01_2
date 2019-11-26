@@ -14,10 +14,10 @@ import java.util.HashMap;
 
 public class MapViewModel extends ViewModel {
 
-    CheckMarkersUseCase checkMarkersUseCase;
-    MutableLiveData<ArrayList<Integer>> removableList = new MutableLiveData<>();
-    MutableLiveData<ArrayList<UserDocumentAll>> addableList = new MutableLiveData<>();
-    MutableLiveData<HashMap> marker = new MutableLiveData<>();
+    private CheckMarkersUseCase checkMarkersUseCase;
+    private MutableLiveData<ArrayList<Integer>> removableList = new MutableLiveData<>();
+    private MutableLiveData<ArrayList<UserDocumentAll>> addableList = new MutableLiveData<>();
+    private MutableLiveData<HashMap> marker = new MutableLiveData<>();
 
     public MapViewModel(CheckMarkersUseCase checkMarkersUseCase) {
         this.checkMarkersUseCase = checkMarkersUseCase;
@@ -26,7 +26,12 @@ public class MapViewModel extends ViewModel {
     //Remove
     public void checkRemovableMarkers(ArrayList<Markers> markerList, ArrayList<UserDocumentAll> listInBounds) {
         //TODO after checkMarkersUseCase.markersToBeRemoved(markerList, listInBounds) use array list in other use case to remove markers
-        removableList.setValue(checkMarkersUseCase.markersToBeRemoved(markerList, listInBounds));
+        ArrayList<Integer> list = checkMarkersUseCase.markersToBeRemoved(markerList, listInBounds);
+        if(list != null) {
+            if(!list.isEmpty()) {
+                removableList.setValue(list);
+            }
+        }
     }
 
     public LiveData<ArrayList<Integer>> getRemovableArray() {
@@ -36,7 +41,12 @@ public class MapViewModel extends ViewModel {
     //Add
 
     public void checkAddableMarkers(ArrayList<Markers> markerList, ArrayList<UserDocumentAll> listInBounds) {
-        addableList.setValue(checkMarkersUseCase.markersToBeAdded(markerList, listInBounds));
+        ArrayList<UserDocumentAll> list = checkMarkersUseCase.markersToBeAdded(markerList, listInBounds);
+        if(list != null) {
+            if(!list.isEmpty()) {
+                addableList.setValue(list);
+            }
+        }
     }
 
     public LiveData<ArrayList<UserDocumentAll>> getAddableArray() {

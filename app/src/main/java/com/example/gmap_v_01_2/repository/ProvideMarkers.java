@@ -2,6 +2,7 @@ package com.example.gmap_v_01_2.repository;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 
@@ -26,15 +27,13 @@ import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 
 public class ProvideMarkers implements ProvideMarkersStateRepo {
-    Context context;
-    UserService firestoreService;
-    UserDocument userDocument;
-    ImageProcessing imageProcessing;
-    FollowerProcessing followersProcessing;
+    private Context context;
+    private UserDocument userDocument;
+    private ImageProcessing imageProcessing;
+    private FollowerProcessing followersProcessing;
 
     public ProvideMarkers(Context context) {
         this.context = context;
-        firestoreService = UserFirestoreService.getInstance(context);
         userDocument = new UserDocument();
         followersProcessing = new FollowerProcessing();
         imageProcessing = new ImageProcessing(followersProcessing);
@@ -42,7 +41,7 @@ public class ProvideMarkers implements ProvideMarkersStateRepo {
 
     @Nullable
     @Override
-    public ArrayList markersToBeRemoved(ArrayList<Markers> markerList, ArrayList<UserDocumentAll> listInBounds) {
+    public ArrayList<Integer> markersToBeRemoved(ArrayList<Markers> markerList, ArrayList<UserDocumentAll> listInBounds) {
         if (!markerList.isEmpty()) {
             //Remove from markerList those markers which don't exist anymore
             ArrayList<Markers> markerListTemp = new ArrayList<>();
@@ -79,7 +78,7 @@ public class ProvideMarkers implements ProvideMarkersStateRepo {
     @Override
     public ArrayList<UserDocumentAll> markersToBeAdded(ArrayList<Markers> markerList, ArrayList<UserDocumentAll> listInBounds) {
         ArrayList<UserDocumentAll> list = new ArrayList<>();
-        UserDocumentAll document = new UserDocumentAll();
+        UserDocumentAll document;
         if(markerList.isEmpty()) {
             if(!listInBounds.isEmpty()) {
                 return listInBounds;
@@ -95,6 +94,7 @@ public class ProvideMarkers implements ProvideMarkersStateRepo {
                     }
                 }
                 if(!found) {
+                    document = new UserDocumentAll();
                     document.setDocumentid(listInBounds.get(i).getDocumentid());
                     document.setUsername(listInBounds.get(i).getUsername());
                     document.setPicture(listInBounds.get(i).getPicture());
@@ -102,6 +102,7 @@ public class ProvideMarkers implements ProvideMarkersStateRepo {
                     document.setFollowers(listInBounds.get(i).getFollowers());
                     document.setVisible(listInBounds.get(i).getVisible());
                     list.add(document);
+                    Log.d("ProvideMarkers", "user added to addable list");
                 }
             }
             return list;
