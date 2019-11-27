@@ -9,6 +9,7 @@ import androidx.annotation.Nullable;
 import com.example.gmap_v_01_2.editor.FollowerProcessing;
 import com.example.gmap_v_01_2.editor.ImageProcessing;
 import com.example.gmap_v_01_2.editor.ImageURLProcessing;
+import com.example.gmap_v_01_2.repository.markers.repo.MarkersPoJo;
 import com.example.gmap_v_01_2.repository.model.users.Markers;
 import com.example.gmap_v_01_2.repository.model.users.UserDocumentAll;
 import com.example.gmap_v_01_2.repository.services.firestore.UserFirestoreService;
@@ -31,12 +32,14 @@ public class ProvideMarkers implements ProvideMarkersStateRepo {
     private UserDocument userDocument;
     private ImageProcessing imageProcessing;
     private FollowerProcessing followersProcessing;
+    private MarkersPoJo markersPoJo;
 
     public ProvideMarkers(Context context) {
         this.context = context;
         userDocument = new UserDocument();
         followersProcessing = new FollowerProcessing();
         imageProcessing = new ImageProcessing(followersProcessing);
+        markersPoJo = MarkersPoJo.getInstance();
     }
 
     @Nullable
@@ -140,13 +143,25 @@ public class ProvideMarkers implements ProvideMarkersStateRepo {
                     String currentFollowers = followersProcessing.instagramFollowersType(userFollowers);
                     markerOptions.title(userName + " : " + currentFollowers + " Followers");
                     LatLng finalUserLongLat = userLongLat;
+                    ArrayList<String> usernameList;
+                    ArrayList<String> userpictureList;
+                    ArrayList<String> userfollowersList;
+                    ArrayList<String> userfullpicture;
+                    usernameList = markersPoJo.getUsernameList();
+                    usernameList.add(userName);
+                    markersPoJo.setUsernameList(usernameList);
+                    userpictureList = markersPoJo.getUserpictureList();
+                    userpictureList.add(userPictureString);
+                    markersPoJo.setUserpictureList(userpictureList);
+                    userfollowersList = markersPoJo.getUserfollowersList();
+                    userfollowersList.add(currentFollowers);
+                    markersPoJo.setUserfollowersList(userfollowersList);
+                    userfullpicture = markersPoJo.getUserfullpicture();
+                    userfullpicture.add(fullPictureString);
+                    markersPoJo.setUserfullpicture(userfullpicture);
                     markerParams.put("markerOptions", markerOptions);
                     markerParams.put("documentId", documentId);
                     markerParams.put("LongLat", finalUserLongLat);
-                    markerParams.put("userPictureAsString", userPictureString);
-                    markerParams.put("userName", userName);
-                    markerParams.put("userFollowers", currentFollowers);
-                    markerParams.put("fullPictureAsString", fullPictureString);
                     return markerParams;
 
                 } catch (ExecutionException e) {
