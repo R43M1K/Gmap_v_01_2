@@ -1,10 +1,12 @@
 package com.example.gmap_v_01_2.repository.markers.repo;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.example.gmap_v_01_2.business.CheckMarkersUseCase;
 import com.example.gmap_v_01_2.repository.model.users.Markers;
 import com.example.gmap_v_01_2.repository.model.users.UserDocumentAll;
+import com.example.gmap_v_01_2.repository.services.firestore.OnUserDocumentReady;
 import com.example.gmap_v_01_2.repository.services.firestore.UserFirestoreService;
 import com.example.gmap_v_01_2.repository.services.firestore.UserService;
 import com.example.gmap_v_01_2.repository.services.firestore.model.UserDocument;
@@ -26,6 +28,7 @@ public class ProvideMarkersOp implements ProvideMarkersOperations {
     private CheckMarkersUseCase checkMarkersUseCase;
     private MarkersPoJo markersPoJo;
     //Constants
+    private final String TAG = getClass().toString();
     private final String SHARED_LONGITUDE = "Longitude";
     private final String SHARED_LATITUDE = "Latitude";
     private final String VISIBLE = "Visible";
@@ -54,6 +57,28 @@ public class ProvideMarkersOp implements ProvideMarkersOperations {
     }
 
     private void init() {
+        //Find user , if user not found create user in firebase
+        firestoreService.findUserById(new OnUserDocumentReady() {
+            @Override
+            public void onReady(UserDocument document) {
+                if(document == null) {
+                    firestoreService.addUser(userDocument);
+                }else{
+                    Log.d(TAG, "User found");
+                }
+            }
+
+            @Override
+            public void onFail() {
+                firestoreService.addUser(userDocument);
+            }
+
+            @Override
+            public void onFail(Throwable cause) {
+                firestoreService.addUser(userDocument);
+            }
+        });
+        //Add created user info to MarkersPoJo
         String id = preferences.get(DOCUMENT_ID, "");
         String username = getUserInfo().getUsername();
         String link = getUserInfo().getPicture();

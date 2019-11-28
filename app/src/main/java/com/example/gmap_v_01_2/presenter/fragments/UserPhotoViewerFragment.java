@@ -15,11 +15,13 @@ import androidx.fragment.app.Fragment;
 import com.example.gmap_v_01_2.R;
 import com.example.gmap_v_01_2.editor.FollowerProcessing;
 import com.example.gmap_v_01_2.editor.ImageProcessing;
+import com.example.gmap_v_01_2.repository.markers.repo.MarkersPoJo;
 
 
 public class UserPhotoViewerFragment extends Fragment {
 
     private OnPhotoFragmentInteractionListener mListener;
+    private MarkersPoJo markersPoJo;
 
     String userfullpicture;
     Bitmap bitmap;
@@ -37,6 +39,7 @@ public class UserPhotoViewerFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        markersPoJo = MarkersPoJo.getInstance();
     }
 
     @Override
@@ -54,7 +57,8 @@ public class UserPhotoViewerFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         final View view = inflater.inflate(R.layout.fragment_fullscrean_photo,container,false);
-        userfullpicture = getArguments().getString("userfullpicture");
+        int pos = getArguments().getInt("userFullPicturePosition");
+        userfullpicture = markersPoJo.getUserfullpicture().get(pos);
         ImageView imageView = view.findViewById(R.id.fullphoto);
         ImageProcessing imageProcessing = new ImageProcessing(new FollowerProcessing());
         bitmap = imageProcessing.stringToBitmap(userfullpicture);

@@ -19,6 +19,7 @@ import com.example.gmap_v_01_2.presenter.MapActivity;
 import com.example.gmap_v_01_2.presenter.MapViewModel;
 import com.example.gmap_v_01_2.presenter.recyclerview.UserAdapter;
 import com.example.gmap_v_01_2.presenter.recyclerview.User_Item;
+import com.example.gmap_v_01_2.repository.markers.repo.MarkersPoJo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +34,7 @@ public class UserListFragment extends Fragment {
 
     private ArrayList<User_Item> useritemsList = new ArrayList<>();
     private MapViewModel mapViewModel;
+    MarkersPoJo markersPoJo;
 
     private OnFragmentInteractionListener mListener;
     public UserListFragment() {
@@ -42,6 +44,7 @@ public class UserListFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        markersPoJo = MarkersPoJo.getInstance();
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -51,18 +54,14 @@ public class UserListFragment extends Fragment {
         final View view = inflater.inflate(R.layout.fragment_user_list, container, false);
         useritemsList.clear();
         //Get Parameters from Activity
-        Bundle arguments = getArguments();
 
-        if (arguments != null) {
-            List<String> username = arguments.getStringArrayList("username");
-            List<String> userpic = arguments.getStringArrayList("userpicture");
-            List<String> userfols = arguments.getStringArrayList("userfollowers");
+        List<String> username = markersPoJo.getUsernameList();
+        List<String> userpic = markersPoJo.getUserpictureList();
+        List<String> userfols =markersPoJo.getUserfollowersList();
 
-            if(userfols != null && userpic != null && username != null) {
-                for(int i = 0; i < username.size(); i++)
-                    useritemsList.add(new User_Item(userpic.get(i), username.get(i), userfols.get(i)));
-            }
-
+        if(userfols != null && userpic != null && username != null) {
+            for (int i = 0; i < username.size(); i++)
+                useritemsList.add(new User_Item(userpic.get(i), username.get(i), userfols.get(i)));
         }
 
         //Initialize RecyclerView

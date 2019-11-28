@@ -17,6 +17,7 @@ import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 
+import com.example.gmap_v_01_2.repository.markers.repo.MarkersPoJo;
 import com.example.gmap_v_01_2.repository.services.firestore.model.UserDocument;
 import com.example.gmap_v_01_2.repository.services.preferencies.DefaultPreferencesService;
 import com.google.android.gms.location.FusedLocationProviderClient;

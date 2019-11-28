@@ -67,10 +67,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private final String TAG = getClass().toString();
 
     //vars
-    private String instagramUsername = "Razmik1993";
     private GoogleMap mMap;
     private Boolean mLocationPermissionsGranted = false;
-    private FusedLocationProviderClient mFusedLocationProviderClient;
     private Handler iHandler = new Handler();
     private Runnable mRunnable;
     public static String username;
@@ -81,16 +79,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     public String documentID;
 
     //Constants
-    private final String SHARED_DOCUMENT_ID = "DocumentId";
-    private final String SHARED_LONGITUDE = "Longitude";
-    private final String SHARED_LATITUDE = "Latitude";
     private final String SHARED_USERNAME = "Username";
-    private final String SHARED_FOLLOWERS = "Followers";
     private final String VISIBLE = "Visible";
 
     //classes
-    FollowerProcessing followersProcessing = new FollowerProcessing();
-    ImageProcessing imageProcessing = new ImageProcessing(followersProcessing);
     Fragment fragment = new UserListFragment();
     Fragment photoFragment = new UserPhotoViewerFragment();
     DefaultPreferencesService defaultPreferencesService;
@@ -119,14 +111,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     //INITIALIZE MAP
     private void initMap() {
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
-
         if (mapFragment != null) mapFragment.getMapAsync(MapActivity.this);
     }
 
     //CHECK PERMISSION FOR LOCATION GOOGLE MAP
    private void getLocationPermission() {
         String[] permissions = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
-
         if (ContextCompat.checkSelfPermission(this.getApplicationContext(), FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             if (ContextCompat.checkSelfPermission(this.getApplicationContext(), COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                 mLocationPermissionsGranted = true;
@@ -167,7 +157,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         factory = new ViewModelProviderFactory(getApplicationContext(),mMap);
         mapViewModel = ViewModelProviders.of(this, factory).get(MapViewModel.class);
         Toast.makeText(this, "Map is ready", Toast.LENGTH_SHORT).show();
-        defaultPreferencesService.put(SHARED_USERNAME, instagramUsername);
         defaultPreferencesService.put(VISIBLE, true);
         visibleChecker();
         openUserList();
@@ -175,23 +164,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
     //USE THIS METHOD TO GET ALL USERS INFORMATION, THEN ADD MARKERS IN CURRENT AREA
     private void readDocFromFirebase() {
-
-        firestoreService.findUserById(new OnUserDocumentReady() {
-            @Override
-            public void onReady(UserDocument document) {
-                Log.d(TAG, "User found");
-            }
-
-            @Override
-            public void onFail() {
-                firestoreService.addUser(userDocument);
-            }
-
-            @Override
-            public void onFail(Throwable cause) {
-                firestoreService.addUser(userDocument);
-            }
-        });
         mapViewModel.checkAddableMarkers();
         mRunnable = new Runnable() {
             @Override
@@ -204,7 +176,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         };
         iHandler.postDelayed(mRunnable, LOCATION_UPDATE_INTERVAL);
         loadMarkers();
-
     }
 
     private void loadMarkers() {
@@ -225,23 +196,25 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             mapViewModel.getAddableArray().observe(this, new Observer<ArrayList<HashMap>>() {
                 @Override
                 public void onChanged(ArrayList<HashMap> hashMaps) {
-                    for (int i = 0; i < hashMaps.size(); i++) {
-                        MarkerOptions markerOptions = (MarkerOptions) hashMaps.get(i).get("markerOptions");
-                        String documentId = (String) hashMaps.get(i).get("documentId");
-                        LatLng latLng = (LatLng) hashMaps.get(i).get("LongLat");
-                        Marker marker = mMap.addMarker(markerOptions);
-                        if((Boolean) hashMaps.get(i).get("moveCamera")) {
-                            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 19f));
+                    if (hashMaps != null && !hashMaps.isEmpty() && !hashMaps.contains(null)) {
+                        for (int i = 0; i < hashMaps.size(); i++) {
+                            MarkerOptions markerOptions = (MarkerOptions) hashMaps.get(i).get("markerOptions");
+                            String documentId = (String) hashMaps.get(i).get("documentId");
+                            LatLng latLng = (LatLng) hashMaps.get(i).get("LongLat");
+                            Marker marker = mMap.addMarker(markerOptions);
+                            if ((Boolean) hashMaps.get(i).get("moveCamera")) {
+                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 19f));
+                            }
+                            String markerId = marker.getId();
+                            ArrayList<Markers> markerList = markersPoJo.getMarkerList();
+                            Markers markers = new Markers();
+                            markers.setDocumentId(documentId);
+                            markers.setLatLng(latLng);
+                            markers.setMarker(marker);
+                            markers.setMarkerId(markerId);
+                            markerList.add(markers);
+                            markersPoJo.setMarkerList(markerList);
                         }
-                        String markerId = marker.getId();
-                        ArrayList<Markers> markerList = markersPoJo.getMarkerList();
-                        Markers markers = new Markers();
-                        markers.setDocumentId(documentId);
-                        markers.setLatLng(latLng);
-                        markers.setMarker(marker);
-                        markers.setMarkerId(markerId);
-                        markerList.add(markers);
-                        markersPoJo.setMarkerList(markerList);
                     }
                 }
             });
@@ -313,17 +286,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     //ADD FRAGMENT TO ACTIVITY
     private void callFragment() {
-        Bundle bundle = new Bundle();
-        bundle.putStringArrayList("username", markersPoJo.getUsernameList());
-        bundle.putStringArrayList("userpicture", markersPoJo.getUserpictureList());
-        bundle.putStringArrayList("userfollowers", markersPoJo.getUserfollowersList());
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction.add(R.id.fframe,fragment);
         fragmentTransaction.addToBackStack(null);
         fragmentTransaction.commit();
-        //Send user params to User List Fragment
-        fragment.setArguments(bundle);
     }
 
 
@@ -343,7 +310,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         }
         if (openPhotoFragment) {
             Bundle bundle = new Bundle();
-            bundle.putString("userfullpicture", markersPoJo.getUserfullpicture().get(pos));
+            bundle.putInt("userFullPicturePosition", pos);
             FragmentManager fragmentManager = getSupportFragmentManager();
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
             fragmentTransaction.add(R.id.fframe,photoFragment);
