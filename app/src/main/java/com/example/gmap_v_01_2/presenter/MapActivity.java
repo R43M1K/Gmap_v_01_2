@@ -166,7 +166,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         mMap.setMinZoomPreference(18f); // User cannot zoom out of 18 zoom distance
         factory = new ViewModelProviderFactory(getApplicationContext(),mMap);
         mapViewModel = ViewModelProviders.of(this, factory).get(MapViewModel.class);
-
         Toast.makeText(this, "Map is ready", Toast.LENGTH_SHORT).show();
         defaultPreferencesService.put(SHARED_USERNAME, instagramUsername);
         defaultPreferencesService.put(VISIBLE, true);
@@ -214,8 +213,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 @Override
                 public void onChanged(ArrayList<Integer> arrayList) {
                     for (int i = 0; i < arrayList.size(); i++) {
-                        int myIndex = i;
-                        if (arrayList.get(i) != 0) {
+                        int myIndex = arrayList.get(i);
+                        if (myIndex != 0) {
                             myIndex--;
                         }
                         markersPoJo.getMarkerList().get(myIndex).getMarker().remove();

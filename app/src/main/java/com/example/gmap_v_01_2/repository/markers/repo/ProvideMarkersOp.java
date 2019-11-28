@@ -35,6 +35,10 @@ public class ProvideMarkersOp implements ProvideMarkersOperations {
     private ArrayList<UserDocumentAll> listInBounds = new ArrayList<>();
     private ArrayList<UserDocumentAll> addableList = new ArrayList<>();
     private ArrayList<Integer> removableList = new ArrayList<>();
+    private ArrayList<String> usernameList = new ArrayList<>();
+    private ArrayList<String> userpictureList = new ArrayList<>();
+    private ArrayList<String> userfollowersList = new ArrayList<>();
+    private ArrayList<String> userfullpicture = new ArrayList<>();
 
 
     public ProvideMarkersOp(Context context, GoogleMap mMap, CheckMarkersUseCase checkMarkersUseCase) {
@@ -64,7 +68,6 @@ public class ProvideMarkersOp implements ProvideMarkersOperations {
         userDocumentAll.setFollowers(followers);
         userDocumentAll.setVisible(visible);
         addableList.add(userDocumentAll);
-        addMarkers();
     }
 
     private UserDocument getUserInfo() {
@@ -93,22 +96,34 @@ public class ProvideMarkersOp implements ProvideMarkersOperations {
         //Remove
         markersPoJo.setRemovableList(checkMarkersUseCase.markersToBeRemoved(markerList, listInBounds));
         removableList = markersPoJo.getRemovableList();
-        if(removableList != null && !removableList.isEmpty()) {
-            removeMarkers();
-        }
         //Add
         markersPoJo.setAddableList(checkMarkersUseCase.markersToBeAdded(markerList, listInBounds));
         addableList = markersPoJo.getAddableList();
-        if(addableList != null && !addableList.isEmpty()) {
-            addMarkers();
-        }
         firestoreService.updateUser(getUserInfo());
+    }
+
+    @Override
+    public ArrayList<Integer> removeMarkers() {
+        ArrayList<Integer> result = new ArrayList<>();
+        if(removableList != null && !removableList.isEmpty()) {
+            if (markerList != null && !markerList.isEmpty()) {
+                for (int i = 0; i < removableList.size(); i++) {
+                    int myIndex = removableList.get(i);
+                    result.add(removableList.get(i));
+                    markersPoJo.getUserfullpicture().remove(myIndex);
+                    markersPoJo.getUserpictureList().remove(myIndex);
+                    markersPoJo.getUsernameList().remove(myIndex);
+                    markersPoJo.getUserfollowersList().remove(myIndex);
+                }
+            }
+        }
+        return result;
     }
 
     @Override
     public ArrayList<HashMap> addMarkers() {
         ArrayList<HashMap> result = new ArrayList<>();
-        if(addableList != null) {
+        if(addableList != null && !addableList.isEmpty()) {
             for (int i = 0; i < addableList.size(); i++) {
                 String id = addableList.get(i).getDocumentid();
                 String link = addableList.get(i).getPicture();
@@ -126,20 +141,4 @@ public class ProvideMarkersOp implements ProvideMarkersOperations {
         return result;
     }
 
-    @Override
-    public ArrayList<Integer> removeMarkers() {
-        ArrayList<Integer> result = new ArrayList<>();
-        if(removableList != null) {
-            if (markerList != null && !markerList.isEmpty()) {
-                for (int i = 0; i < removableList.size(); i++) {
-                    result.add(i);
-                    markersPoJo.getUserpictureList().remove(i);
-                    markersPoJo.getUsernameList().remove(i);
-                    markersPoJo.getUserfollowersList().remove(i);
-                    markersPoJo.getUserfullpicture().remove(i);
-                }
-            }
-        }
-        return result;
-    }
 }
