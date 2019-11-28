@@ -50,7 +50,7 @@ public class ProvideMarkers implements ProvideMarkersStateRepo {
             ArrayList<Markers> markerListTemp = new ArrayList<>();
             ArrayList<Integer> removable = new ArrayList<>();
             for (int i = 0; i < markerList.size(); i++) {
-                boolean found = false;
+                boolean found = true;
                 for (int j = 0; j < listInBounds.size(); j++) {
                     if (markerList.get(i).getDocumentId().equals(listInBounds.get(j).getDocumentid())) {
                         if (listInBounds.get(j).getVisible()) {
@@ -66,6 +66,9 @@ public class ProvideMarkers implements ProvideMarkersStateRepo {
                             found = false;
                         }
                         break;
+                    }
+                    if(j == listInBounds.size() - 1) {
+                        found = false;
                     }
                 }
                 if (!found) {
@@ -162,6 +165,7 @@ public class ProvideMarkers implements ProvideMarkersStateRepo {
                     markerParams.put("markerOptions", markerOptions);
                     markerParams.put("documentId", documentId);
                     markerParams.put("LongLat", finalUserLongLat);
+                    markerParams.put("moveCamera", moveCamera);
                     return markerParams;
 
                 } catch (ExecutionException e) {

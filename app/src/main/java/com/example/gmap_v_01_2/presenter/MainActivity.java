@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity implements FrontMapFragment.
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        factory = new ViewModelProviderFactory(getApplicationContext());
+        factory = new ViewModelProviderFactory(getApplicationContext(), null);
         mainViewModel = ViewModelProviders.of(this, factory).get(MainViewModel.class);
 
         setContentView(R.layout.activity_main);

@@ -86,16 +86,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private final String SHARED_LATITUDE = "Latitude";
     private final String SHARED_USERNAME = "Username";
     private final String SHARED_FOLLOWERS = "Followers";
-
-    //vars to send to fragment
-    //TODO provide to use case viea repo(use in memory cache)
-    private ArrayList<String> usernameList = new ArrayList<>();
-    private ArrayList<String> userpictureList = new ArrayList<>();
-    private ArrayList<String> userfollowersList = new ArrayList<>();
-    private ArrayList<String> userfullpicture = new ArrayList<>();
-    private ArrayList<Markers> markerList = new ArrayList<>();
-    private ArrayList<UserDocumentAll> listInBounds = new ArrayList<>();
-    private ArrayList<UserDocumentAll> feedback = new ArrayList<>();
+    private final String VISIBLE = "Visible";
 
     //classes
     FollowerProcessing followersProcessing = new FollowerProcessing();
@@ -120,11 +111,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         userDocument = new UserDocument();
         markersPoJo = MarkersPoJo.getInstance();
         firestoreService = UserFirestoreService.getInstance(getBaseContext());
-        factory = new ViewModelProviderFactory(getApplicationContext());
-        mapViewModel = ViewModelProviders.of(this, factory).get(MapViewModel.class);
         getLocationPermission();
         startLocationService();
-        loadMarkers();
     }
 
 
@@ -175,43 +163,20 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+        mMap.setMinZoomPreference(18f); // User cannot zoom out of 18 zoom distance
+        factory = new ViewModelProviderFactory(getApplicationContext(),mMap);
+        mapViewModel = ViewModelProviders.of(this, factory).get(MapViewModel.class);
+
         Toast.makeText(this, "Map is ready", Toast.LENGTH_SHORT).show();
         defaultPreferencesService.put(SHARED_USERNAME, instagramUsername);
+        defaultPreferencesService.put(VISIBLE, true);
         visibleChecker();
         openUserList();
         readDocFromFirebase();
-
-        mMap.setMinZoomPreference(18f); // User cannot zoom out of 18 zoom distance
     }
     //USE THIS METHOD TO GET ALL USERS INFORMATION, THEN ADD MARKERS IN CURRENT AREA
     private void readDocFromFirebase() {
 
-        userDocument.setUsername(instagramUsername);
-        userDocument.setPicture("https://image.freepik.com/free-vector/abstract-dynamic-pattern-wallpaper-vector_53876-59131.jpg");
-        userDocument.setFollowers(5478);
-        userDocument.setVisible(true);
-        if(userDocument.getLocation() == null) {
-
-            String longitudePrefs = defaultPreferencesService.get(SHARED_LONGITUDE,"");
-            longitudePrefs = longitudePrefs == null || longitudePrefs.isEmpty()? "0": longitudePrefs;
-            double longitude = Double.valueOf(longitudePrefs);
-
-            String latitudePrefs = defaultPreferencesService.get(SHARED_LATITUDE, "");
-            latitudePrefs = latitudePrefs == null || latitudePrefs.isEmpty()? "0": latitudePrefs;
-            double latitude = Double.valueOf(latitudePrefs);
-
-            userDocument.setLocation(new GeoPoint(latitude, longitude));
-        }
-
-        String username = userDocument.getUsername();
-        GeoPoint location = userDocument.getLocation();
-        String link = userDocument.getPicture();
-        int followers = userDocument.getFollowers();
-        boolean visible = userDocument.getVisible();
-
-        Runnable addMarkerRunnable = new AddMarkerRunnable(defaultPreferencesService.get(SHARED_DOCUMENT_ID,""),link, username, location, followers, visible, true);
-        Thread thread = new Thread(addMarkerRunnable);
-        thread.start();
         firestoreService.findUserById(new OnUserDocumentReady() {
             @Override
             public void onReady(UserDocument document) {
@@ -228,7 +193,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 firestoreService.addUser(userDocument);
             }
         });
-
+        mapViewModel.checkAddableMarkers();
         mRunnable = new Runnable() {
             @Override
             public void run() {
@@ -239,42 +204,49 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             }
         };
         iHandler.postDelayed(mRunnable, LOCATION_UPDATE_INTERVAL);
+        loadMarkers();
 
     }
 
     private void loadMarkers() {
-        mapViewModel.getRemovableArray().observe(this, new Observer<ArrayList<Integer>>() {
-            @Override
-            public void onChanged(ArrayList<Integer> arrayList) {
-                for(int i=0; i<arrayList.size(); i++) {
-                    int myIndex = i;
-                    if(arrayList.get(i) != 0) {
-                        myIndex--;
+        if(mapViewModel != null) {
+            mapViewModel.getRemovableArray().observe(this, new Observer<ArrayList<Integer>>() {
+                @Override
+                public void onChanged(ArrayList<Integer> arrayList) {
+                    for (int i = 0; i < arrayList.size(); i++) {
+                        int myIndex = i;
+                        if (arrayList.get(i) != 0) {
+                            myIndex--;
+                        }
+                        markersPoJo.getMarkerList().get(myIndex).getMarker().remove();
+                        markersPoJo.getMarkerList().remove(myIndex);
                     }
-                    markersPoJo.getMarkerList().get(myIndex).getMarker().remove();
-                    markersPoJo.getMarkerList().remove(myIndex);
                 }
-            }
-        });
-        mapViewModel.getAddableArray().observe(this, new Observer<ArrayList<HashMap>>() {
-            @Override
-            public void onChanged(ArrayList<HashMap> hashMaps) {
-                for(int i=0; i<hashMaps.size(); i++) {
-                    MarkerOptions markerOptions = (MarkerOptions) hashMaps.get(i).get("markerOptions");
-                    String documentId = (String) hashMaps.get(i).get("documentId");
-                    LatLng latLng = (LatLng) hashMaps.get(i).get("LongLat");
-                    Marker marker = mMap.addMarker(markerOptions);
-                    String markerId = marker.getId();
-                    ArrayList<Markers> markerList = markersPoJo.getMarkerList();
-                    Markers markers = new Markers();
-                    markers.setDocumentId(documentId);
-                    markers.setLatLng(latLng);
-                    markers.setMarker(marker);
-                    markers.setMarkerId(markerId);
-                    markerList.add(markers);
+            });
+            mapViewModel.getAddableArray().observe(this, new Observer<ArrayList<HashMap>>() {
+                @Override
+                public void onChanged(ArrayList<HashMap> hashMaps) {
+                    for (int i = 0; i < hashMaps.size(); i++) {
+                        MarkerOptions markerOptions = (MarkerOptions) hashMaps.get(i).get("markerOptions");
+                        String documentId = (String) hashMaps.get(i).get("documentId");
+                        LatLng latLng = (LatLng) hashMaps.get(i).get("LongLat");
+                        Marker marker = mMap.addMarker(markerOptions);
+                        if((Boolean) hashMaps.get(i).get("moveCamera")) {
+                            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 19f));
+                        }
+                        String markerId = marker.getId();
+                        ArrayList<Markers> markerList = markersPoJo.getMarkerList();
+                        Markers markers = new Markers();
+                        markers.setDocumentId(documentId);
+                        markers.setLatLng(latLng);
+                        markers.setMarker(marker);
+                        markers.setMarkerId(markerId);
+                        markerList.add(markers);
+                        markersPoJo.setMarkerList(markerList);
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     //START BACKGROUND SERVICE THAT GET USER LOCATION WHEN IT'S CHANGED AND WRITE TO FIREBASE
@@ -311,8 +283,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         aSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
                 visible = true;
+                defaultPreferencesService.put(VISIBLE, true);
             } else {
                 visible = false;
+                defaultPreferencesService.put(VISIBLE, false);
             }
         });
     }
@@ -341,9 +315,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     //ADD FRAGMENT TO ACTIVITY
     private void callFragment() {
         Bundle bundle = new Bundle();
-        bundle.putStringArrayList("username", usernameList);
-        bundle.putStringArrayList("userpicture", userpictureList);
-        bundle.putStringArrayList("userfollowers", userfollowersList);
+        bundle.putStringArrayList("username", markersPoJo.getUsernameList());
+        bundle.putStringArrayList("userpicture", markersPoJo.getUserpictureList());
+        bundle.putStringArrayList("userfollowers", markersPoJo.getUserfollowersList());
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction.add(R.id.fframe,fragment);
@@ -370,7 +344,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         }
         if (openPhotoFragment) {
             Bundle bundle = new Bundle();
-            bundle.putString("userfullpicture", userfullpicture.get(pos));
+            bundle.putString("userfullpicture", markersPoJo.getUserfullpicture().get(pos));
             FragmentManager fragmentManager = getSupportFragmentManager();
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
             fragmentTransaction.add(R.id.fframe,photoFragment);
@@ -390,84 +364,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
             fragmentTransaction.remove(photoFragment);
             fragmentTransaction.commit();
-        }
-    }
-
-    private class AddMarkerRunnable implements Runnable {
-
-        private String id;
-        private String picture;
-        private String username;
-        private GeoPoint location;
-        private int followers;
-        private boolean visible;
-        private boolean movecamera;
-
-        public AddMarkerRunnable(String id, String picture, String username, GeoPoint location, int followers, boolean visible, boolean movecamera) {
-            this.picture = picture;
-            this.username = username;
-            this.followers = followers;
-            this.location = location;
-            this.visible = visible;
-            this.movecamera = movecamera;
-            this.id = id;
-        }
-
-        @Override
-        public void run() {
-            //ADD MARKER TO MAP AND SEND USER PARAMS TO FRAGMENT
-            if (visible) {
-                ImageURLProcessing imageURLProcessing = new ImageURLProcessing();
-                imageURLProcessing.execute(picture);
-                try {
-                    Bitmap bitmap = imageURLProcessing.get();
-                    MarkerOptions markerOptions = new MarkerOptions();
-                    Bitmap roundBitMap;
-                    Bitmap resizedBitMap;
-                    Bitmap userListFragmentBitmap;
-                    resizedBitMap = imageProcessing.getResizedBitmap(bitmap, followers); // Resize bitmap
-                    roundBitMap = imageProcessing.getCroppedBitmap(resizedBitMap); // Make current bitmap to round type
-                    userListFragmentBitmap = imageProcessing.getCroppedBitmap(imageProcessing.getResizedBitmapForUserListFragment(bitmap)); // Make current bitmap for userlist fragment type
-                    String userPictureString = imageProcessing.bitmapToString(userListFragmentBitmap); //Convert bitmap to String to send to fragment as param
-                    String fullPictureString = imageProcessing.bitmapToString(bitmap);
-
-                    //TODO read current location data from shared prefs
-                    LatLng userLongLat = new LatLng(1, 1);
-
-                    if (location != null) {
-                        userLongLat = new LatLng(location.getLatitude(), location.getLongitude());
-                    }
-                    markerOptions.position(userLongLat);
-                    markerOptions.icon(BitmapDescriptorFactory.fromBitmap(roundBitMap));
-                    String userFollowers = followersProcessing.instagramFollowersType(followers);
-                    markerOptions.title(username + " : " + userFollowers + " Followers");
-                    LatLng finalUserLongLat = userLongLat;
-                    iHandler.post(() -> {
-                        mMap.setMinZoomPreference(18f); // User cannot zoom out of 18 zoom distance
-                        Marker marker = mMap.addMarker(markerOptions); // Adding marker on map.
-                        Markers markers = new Markers();
-                        markers.setDocumentId(id);
-                        markers.setLatLng(finalUserLongLat);
-                        markers.setMarkerId(marker.getId());
-                        markers.setMarker(marker);
-                        markerList.add(markers);
-                        if (movecamera) {
-                            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(finalUserLongLat, 19f)); // Move camera to user location in 19 zoom value
-                        }
-                    });
-                    //Save user params for userList fragment
-                    userpictureList.add(userPictureString);
-                    usernameList.add(username);
-                    userfollowersList.add(userFollowers);
-                    userfullpicture.add(fullPictureString);
-
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
-            }
         }
     }
 

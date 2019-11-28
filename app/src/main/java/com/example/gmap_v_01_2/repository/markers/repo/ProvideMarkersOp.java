@@ -20,6 +20,7 @@ public class ProvideMarkersOp implements ProvideMarkersOperations {
     private Context context;
     private GoogleMap mMap;
     private UserDocument userDocument;
+    private UserDocumentAll userDocumentAll;
     private DefaultPreferencesService preferences;
     private UserService firestoreService;
     private CheckMarkersUseCase checkMarkersUseCase;
@@ -28,6 +29,7 @@ public class ProvideMarkersOp implements ProvideMarkersOperations {
     private final String SHARED_LONGITUDE = "Longitude";
     private final String SHARED_LATITUDE = "Latitude";
     private final String VISIBLE = "Visible";
+    private final String DOCUMENT_ID = "DocumentId";
     //Arrays
     private ArrayList<Markers> markerList = new ArrayList<>();
     private ArrayList<UserDocumentAll> listInBounds = new ArrayList<>();
@@ -39,14 +41,33 @@ public class ProvideMarkersOp implements ProvideMarkersOperations {
         this.context = context;
         this.mMap = mMap;
         userDocument = new UserDocument();
+        userDocumentAll = new UserDocumentAll();
         preferences = DefaultPreferencesService.getInstance(context);
         firestoreService = UserFirestoreService.getInstance(context);
         this.checkMarkersUseCase = checkMarkersUseCase;
         markersPoJo = MarkersPoJo.getInstance();
+        init();
     }
 
-    @Override
-    public void checkMarkers() {
+    private void init() {
+        String id = preferences.get(DOCUMENT_ID, "");
+        String username = getUserInfo().getUsername();
+        String link = getUserInfo().getPicture();
+        GeoPoint location = getUserInfo().getLocation();
+        int followers = getUserInfo().getFollowers();
+        boolean visible = getUserInfo().getVisible();
+        //Add current user to ListInBounds
+        userDocumentAll.setDocumentid(id);
+        userDocumentAll.setUsername(username);
+        userDocumentAll.setPicture(link);
+        userDocumentAll.setLocation(location);
+        userDocumentAll.setFollowers(followers);
+        userDocumentAll.setVisible(visible);
+        addableList.add(userDocumentAll);
+        addMarkers();
+    }
+
+    private UserDocument getUserInfo() {
         userDocument.setUsername("Razmik1993");
         userDocument.setPicture("https://image.freepik.com/free-vector/abstract-dynamic-pattern-wallpaper-vector_53876-59131.jpg");
         userDocument.setFollowers(5478);
@@ -61,6 +82,11 @@ public class ProvideMarkersOp implements ProvideMarkersOperations {
 
         userDocument.setVisible(preferences.get(VISIBLE, true));
         userDocument.setLocation(new GeoPoint(latitude, longitude));
+        return userDocument;
+    }
+
+    @Override
+    public void checkMarkers() {
         listInBounds = firestoreService.getInBoundUsers(mMap);
         markerList = markersPoJo.getMarkerList();
         markersPoJo.setListInBounds(listInBounds);
@@ -76,20 +102,26 @@ public class ProvideMarkersOp implements ProvideMarkersOperations {
         if(addableList != null && !addableList.isEmpty()) {
             addMarkers();
         }
-        firestoreService.updateUser(userDocument);
+        firestoreService.updateUser(getUserInfo());
     }
 
     @Override
     public ArrayList<HashMap> addMarkers() {
         ArrayList<HashMap> result = new ArrayList<>();
-        for (int i = 0; i < addableList.size(); i++) {
-            String id = addableList.get(i).getDocumentid();
-            String link = addableList.get(i).getPicture();
-            String username = addableList.get(i).getUsername();
-            GeoPoint location = addableList.get(i).getLocation();
-            int followers = addableList.get(i).getFollowers();
-            boolean visible = addableList.get(i).getVisible();
-            result.add(checkMarkersUseCase.addMarker(id, username, link, location, followers, visible, false));
+        if(addableList != null) {
+            for (int i = 0; i < addableList.size(); i++) {
+                String id = addableList.get(i).getDocumentid();
+                String link = addableList.get(i).getPicture();
+                String username = addableList.get(i).getUsername();
+                GeoPoint location = addableList.get(i).getLocation();
+                int followers = addableList.get(i).getFollowers();
+                boolean visible = addableList.get(i).getVisible();
+                boolean moveCamera = false;
+                if(id.equals(preferences.get(DOCUMENT_ID,""))) {
+                    moveCamera = true;
+                }
+                result.add(checkMarkersUseCase.addMarker(id, username, link, location, followers, visible, moveCamera));
+            }
         }
         return result;
     }
@@ -97,13 +129,15 @@ public class ProvideMarkersOp implements ProvideMarkersOperations {
     @Override
     public ArrayList<Integer> removeMarkers() {
         ArrayList<Integer> result = new ArrayList<>();
-        if(markerList != null && !markerList.isEmpty()) {
-            for (int i = 0; i < removableList.size(); i++) {
-                result.add(i);
-                markersPoJo.getUserpictureList().remove(i);
-                markersPoJo.getUsernameList().remove(i);
-                markersPoJo.getUserfollowersList().remove(i);
-                markersPoJo.getUserfullpicture().remove(i);
+        if(removableList != null) {
+            if (markerList != null && !markerList.isEmpty()) {
+                for (int i = 0; i < removableList.size(); i++) {
+                    result.add(i);
+                    markersPoJo.getUserpictureList().remove(i);
+                    markersPoJo.getUsernameList().remove(i);
+                    markersPoJo.getUserfollowersList().remove(i);
+                    markersPoJo.getUserfullpicture().remove(i);
+                }
             }
         }
         return result;
