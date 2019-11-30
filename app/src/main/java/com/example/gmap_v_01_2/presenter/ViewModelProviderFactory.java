@@ -8,15 +8,13 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.gmap_v_01_2.business.CheckConnectionsUseCase;
 import com.example.gmap_v_01_2.business.CheckInternetGpsServices;
-import com.example.gmap_v_01_2.business.CheckMarkers;
-import com.example.gmap_v_01_2.business.CheckMarkersUseCase;
 import com.example.gmap_v_01_2.business.CheckPermissions;
 import com.example.gmap_v_01_2.business.markers.MarkersMain;
 import com.example.gmap_v_01_2.business.markers.MarkersMainUseCase;
 import com.example.gmap_v_01_2.repository.ProvideConnectionsStateRepo;
 import com.example.gmap_v_01_2.repository.ProvideInternetGpsServicesStateRepo;
-import com.example.gmap_v_01_2.repository.ProvideMarkers;
-import com.example.gmap_v_01_2.repository.ProvideMarkersStateRepo;
+import com.example.gmap_v_01_2.repository.services.markers.UserMarkersService;
+import com.example.gmap_v_01_2.repository.services.markers.MarkerService;
 import com.example.gmap_v_01_2.repository.ProvidePermissionsStateRepo;
 import com.example.gmap_v_01_2.repository.markers.repo.ProvideMarkersOp;
 import com.example.gmap_v_01_2.repository.markers.repo.ProvideMarkersOperations;
@@ -46,9 +44,7 @@ public class ViewModelProviderFactory extends ViewModelProvider.NewInstanceFacto
             return (T) new MainViewModel(checkConnectionsUseCase, checkPermissions);
         } else if(modelClass.isAssignableFrom(MapViewModel.class)) {
 
-            ProvideMarkersStateRepo provideMarkersStateRepo = new ProvideMarkers(context);
-            CheckMarkersUseCase checkMarkersUseCase = new CheckMarkers(provideMarkersStateRepo);
-            ProvideMarkersOperations provideMarkersOperations = new ProvideMarkersOp(context,googleMap, checkMarkersUseCase);
+            ProvideMarkersOperations provideMarkersOperations = new ProvideMarkersOp(context,googleMap);
             MarkersMainUseCase markersMainUseCase = new MarkersMain(provideMarkersOperations);
 
             return (T) new MapViewModel(markersMainUseCase);

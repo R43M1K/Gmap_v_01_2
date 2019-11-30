@@ -1,4 +1,4 @@
-package com.example.gmap_v_01_2.repository;
+package com.example.gmap_v_01_2.repository.services.markers;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -12,29 +12,24 @@ import com.example.gmap_v_01_2.editor.ImageURLProcessing;
 import com.example.gmap_v_01_2.repository.markers.repo.MarkersPoJo;
 import com.example.gmap_v_01_2.repository.model.users.Markers;
 import com.example.gmap_v_01_2.repository.model.users.UserDocumentAll;
-import com.example.gmap_v_01_2.repository.services.firestore.UserFirestoreService;
-import com.example.gmap_v_01_2.repository.services.firestore.UserService;
 import com.example.gmap_v_01_2.repository.services.firestore.model.UserDocument;
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.firestore.GeoPoint;
-import com.google.firebase.firestore.auth.User;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 
-public class ProvideMarkers implements ProvideMarkersStateRepo {
+public class UserMarkersService implements MarkerService {
     private Context context;
     private UserDocument userDocument;
     private ImageProcessing imageProcessing;
     private FollowerProcessing followersProcessing;
     private MarkersPoJo markersPoJo;
 
-    public ProvideMarkers(Context context) {
+    public UserMarkersService(Context context) {
         this.context = context;
         userDocument = new UserDocument();
         followersProcessing = new FollowerProcessing();
@@ -108,7 +103,7 @@ public class ProvideMarkers implements ProvideMarkersStateRepo {
                     document.setFollowers(listInBounds.get(i).getFollowers());
                     document.setVisible(listInBounds.get(i).getVisible());
                     list.add(document);
-                    Log.d("ProvideMarkers", "user added to addable list");
+                    Log.d("UserMarkersService", "user added to addable list");
                 }
             }
             return list;
