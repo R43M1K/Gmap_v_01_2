@@ -176,6 +176,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             @Override
             public void run() {
                 mapViewModel.checkMarkers();
+                Log.d(TAG, "MarkersList are " + markersPoJo.getMarkerList().size());
                 iHandler.postDelayed(this, LOCATION_UPDATE_INTERVAL);
             }
         }, LOCATION_UPDATE_INTERVAL);
@@ -188,10 +189,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 for (int i = 0; i < arrayList.size(); i++) {
                     int myIndex = arrayList.get(i);
                     if (myIndex != 0 && i != 0) {
-                        myIndex--;
+                        myIndex = myIndex - i;
                     }
                     markersPoJo.getMarkerList().get(myIndex).getMarker().remove();
                     markersPoJo.getMarkerList().remove(myIndex);
+                    Log.d(TAG, "Deleted " + arrayList.size() + " markers from map");
                 }
             });
             mapViewModel.getAddableArray().observe(this, hashMaps -> {

@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 
 public class UserMarkersService implements MarkerService {
+    private final String TAG = getClass().toString();
     private Context context;
     private UserDocument userDocument;
     private ImageProcessing imageProcessing;
@@ -45,30 +46,37 @@ public class UserMarkersService implements MarkerService {
             //Remove from markerList those markers which don't exist anymore
             ArrayList<Markers> markerListTemp = new ArrayList<>();
             ArrayList<Integer> removable = new ArrayList<>();
-            for (int i = 0; i < markerList.size(); i++) {
-                boolean found = true;
-                for (int j = 0; j < listInBounds.size(); j++) {
-                    if (markerList.get(i).getDocumentId().equals(listInBounds.get(j).getDocumentid())) {
-                        if (listInBounds.get(j).getVisible()) {
-                            double longitude = markerList.get(i).getLatLng().longitude;
-                            double latitude = markerList.get(i).getLatLng().latitude;
-                            if (longitude == listInBounds.get(j).getLocation().getLongitude() && latitude == listInBounds.get(j).getLocation().getLatitude()) {
-                                found = true;
-                                markerListTemp.add(markerList.get(i));
+            if(!listInBounds.isEmpty()) {
+                for (int i = 0; i < markerList.size(); i++) {
+                    boolean found = true;
+                    for (int j = 0; j < listInBounds.size(); j++) {
+                        if (markerList.get(i).getDocumentId().equals(listInBounds.get(j).getDocumentid())) {
+                            if (listInBounds.get(j).getVisible()) {
+                                double longitude = markerList.get(i).getLatLng().longitude;
+                                double latitude = markerList.get(i).getLatLng().latitude;
+                                if (longitude == listInBounds.get(j).getLocation().getLongitude() && latitude == listInBounds.get(j).getLocation().getLatitude()) {
+                                    found = true;
+                                    markerListTemp.add(markerList.get(i));
+                                } else {
+                                    found = false;
+                                }
                             } else {
                                 found = false;
                             }
-                        } else {
+                            break;
+                        }
+                        if (j == listInBounds.size() - 1) {
                             found = false;
                         }
-                        break;
                     }
-                    if(j == listInBounds.size() - 1) {
-                        found = false;
+                    if (!found) {
+                        removable.add(i);
                     }
                 }
-                if (!found) {
+            }else{
+                for(int i=0; i<markerList.size(); i++) {
                     removable.add(i);
+                    Log.d(TAG, "removable index is " + i);
                 }
             }
             return removable;

@@ -141,14 +141,17 @@ public class ProvideMarkersOp implements ProvideMarkersOperations {
     private ArrayList<Integer> removeMarkers(@NonNull ArrayList<Markers> markers, @NonNull ArrayList<Integer> myList) {
         ArrayList<Integer> result = new ArrayList<>();
         for (int i = 0; i < myList.size(); i++) {
-            int myIndex = myList.get(i);
-            result.add(myList.get(i));
-            markersPoJo.getUserfullpicture().remove(myIndex);
-            markersPoJo.getUserpictureList().remove(myIndex);
-            markersPoJo.getUsernameList().remove(myIndex);
-            markersPoJo.getUserfollowersList().remove(myIndex);
+                int myIndex = myList.get(i);
+                if (myIndex != 0 && i != 0) {
+                    myIndex = myIndex - i;
+                }
+                result.add(myList.get(i));
+                markersPoJo.getUserfullpicture().remove(myIndex);
+                markersPoJo.getUserpictureList().remove(myIndex);
+                markersPoJo.getUsernameList().remove(myIndex);
+                markersPoJo.getUserfollowersList().remove(myIndex);
+                Log.d(TAG, "Deleted index " + myIndex);
         }
-
         return result;
     }
 
