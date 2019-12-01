@@ -117,6 +117,7 @@ public class ProvideMarkersOp implements ProvideMarkersOperations {
         markerList = markersPoJo.getMarkerList();
         markersPoJo.setListInBounds(listInBounds);
         //Remove
+        //TODO get removable list from service
         markersPoJo.setRemovableList(markerService.markersToBeRemoved(markerList, listInBounds));
         removableList = markersPoJo.getRemovableList();
         hashMap.put("remove", removeMarkers(markerList, removableList));
