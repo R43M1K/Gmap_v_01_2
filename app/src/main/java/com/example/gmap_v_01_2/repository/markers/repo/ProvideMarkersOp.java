@@ -39,6 +39,7 @@ public class ProvideMarkersOp implements ProvideMarkersOperations {
     private ArrayList<UserDocumentAll> listInBounds = new ArrayList<>();
     private ArrayList<UserDocumentAll> addableList = new ArrayList<>();
     private ArrayList<Integer> removableList = new ArrayList<>();
+    private ArrayList<UserDocumentAll> oneTimeAddableList = new ArrayList<>();
 
     public ProvideMarkersOp(Context context, GoogleMap mMap) {
         this.context = context;
@@ -88,7 +89,7 @@ public class ProvideMarkersOp implements ProvideMarkersOperations {
         userDocumentAll.setLocation(location);
         userDocumentAll.setFollowers(followers);
         userDocumentAll.setVisible(visible);
-        addableList.add(userDocumentAll);
+        oneTimeAddableList.add(userDocumentAll);
     }
 
     private UserDocument getUserInfo() {
@@ -110,27 +111,35 @@ public class ProvideMarkersOp implements ProvideMarkersOperations {
     }
 
     @Override
-    public void checkMarkers() {
+    public HashMap checkMarkers() {
+        HashMap hashMap = new HashMap();
         listInBounds = firestoreService.getInBoundUsers(mMap);
         markerList = markersPoJo.getMarkerList();
         markersPoJo.setListInBounds(listInBounds);
         //Remove
         markersPoJo.setRemovableList(markerService.markersToBeRemoved(markerList, listInBounds));
         removableList = markersPoJo.getRemovableList();
+        hashMap.put("remove", removeMarkers(markerList, removableList));
         //Add
-        markersPoJo.setAddableList(markerService.markersToBeAdded(markerList, listInBounds));
-        addableList = markersPoJo.getAddableList();
+        if(!oneTimeAddableList.isEmpty()) {
+            addableList.add(oneTimeAddableList.get(0));
+            oneTimeAddableList.clear();
+        }else {
+            markersPoJo.setAddableList(markerService.markersToBeAdded(markerList, listInBounds));
+            addableList = markersPoJo.getAddableList();
+        }
+        hashMap.put("add", addMarkers(addableList));
         firestoreService.updateUser(getUserInfo());
+        return hashMap;
     }
 
-    @Override
-    public ArrayList<Integer> removeMarkers() {
+    private ArrayList<Integer> removeMarkers(ArrayList<Markers> markers, ArrayList<Integer> myList) {
         ArrayList<Integer> result = new ArrayList<>();
-        if(removableList != null && !removableList.isEmpty()) {
-            if (markerList != null && !markerList.isEmpty()) {
-                for (int i = 0; i < removableList.size(); i++) {
-                    int myIndex = removableList.get(i);
-                    result.add(removableList.get(i));
+        if(myList != null && !myList.isEmpty()) {
+            if (markers != null && !markers.isEmpty()) {
+                for (int i = 0; i < myList.size(); i++) {
+                    int myIndex = myList.get(i);
+                    result.add(myList.get(i));
                     markersPoJo.getUserfullpicture().remove(myIndex);
                     markersPoJo.getUserpictureList().remove(myIndex);
                     markersPoJo.getUsernameList().remove(myIndex);
@@ -141,17 +150,16 @@ public class ProvideMarkersOp implements ProvideMarkersOperations {
         return result;
     }
 
-    @Override
-    public ArrayList<HashMap> addMarkers() {
+    private ArrayList<HashMap> addMarkers(ArrayList<UserDocumentAll> mylist) {
         ArrayList<HashMap> result = new ArrayList<>();
-        if(addableList != null && !addableList.isEmpty()) {
-            for (int i = 0; i < addableList.size(); i++) {
-                String id = addableList.get(i).getDocumentid();
-                String link = addableList.get(i).getPicture();
-                String username = addableList.get(i).getUsername();
-                GeoPoint location = addableList.get(i).getLocation();
-                int followers = addableList.get(i).getFollowers();
-                boolean visible = addableList.get(i).getVisible();
+        if(mylist != null && !mylist.isEmpty()) {
+            for (int i = 0; i < mylist.size(); i++) {
+                String id = mylist.get(i).getDocumentid();
+                String link = mylist.get(i).getPicture();
+                String username = mylist.get(i).getUsername();
+                GeoPoint location = mylist.get(i).getLocation();
+                int followers = mylist.get(i).getFollowers();
+                boolean visible = mylist.get(i).getVisible();
                 boolean moveCamera = false;
                 if(id.equals(preferences.get(DOCUMENT_ID,""))) {
                     moveCamera = true;

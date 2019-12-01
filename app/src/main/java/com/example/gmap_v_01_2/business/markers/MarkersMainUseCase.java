@@ -7,10 +7,7 @@ import java.util.HashMap;
 
 public interface MarkersMainUseCase {
 
-    void checkMarkers();
+    HashMap checkMarkers();
 
-    ArrayList<HashMap> addMarkers();
-
-    ArrayList<Integer> removeMarkers();
 
 }

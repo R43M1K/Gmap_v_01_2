@@ -7,10 +7,15 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.gmap_v_01_2.business.markers.MarkersMainUseCase;
+import com.example.gmap_v_01_2.repository.model.users.Markers;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import io.reactivex.Completable;
+import io.reactivex.CompletableEmitter;
+import io.reactivex.CompletableObserver;
+import io.reactivex.CompletableOnSubscribe;
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
@@ -21,6 +26,7 @@ import io.reactivex.SingleObserver;
 import io.reactivex.SingleOnSubscribe;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.internal.observers.SubscriberCompletableObserver;
 import io.reactivex.schedulers.Schedulers;
 
 public class MapViewModel extends ViewModel {
@@ -36,34 +42,15 @@ public class MapViewModel extends ViewModel {
 
     //Check
     public void checkMarkers() {
-        Single single = Single.create(emitter -> markersMainUseCase.checkMarkers());
-        single.subscribeOn(Schedulers.io())
-                .observeOn(Schedulers.single())
-                .subscribe(new SingleObserver() {
-                    @Override
-                    public void onSubscribe(Disposable d) {
-                        Log.d(TAG, "Subscribed");
-                    }
-
-                    @Override
-                    public void onSuccess(Object o) {
-                        Log.d(TAG, "Success");
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-
-                    }
-                });
-        //markersMainUseCase.checkMarkers();
-    }
-
-    //Remove
-    public void checkRemovableMarkers() {
-        Observable o = Observable.create(emitter -> emitter.onNext(markersMainUseCase.removeMarkers()));
-        o.subscribeOn(Schedulers.io())
+        Observable.create(new ObservableOnSubscribe<Object>() {
+            @Override
+            public void subscribe(ObservableEmitter<Object> emitter) throws Exception {
+                emitter.onNext(markersMainUseCase.checkMarkers());
+                emitter.onComplete();
+            }
+        }).subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Observer() {
+                .subscribe(new Observer<Object>() {
                     @Override
                     public void onSubscribe(Disposable d) {
 
@@ -71,17 +58,24 @@ public class MapViewModel extends ViewModel {
 
                     @Override
                     public void onNext(Object o) {
-                        ArrayList<Integer> list = (ArrayList<Integer>) o;
+                        HashMap hashMap = (HashMap) o;
+                        ArrayList<Integer> list =(ArrayList<Integer>) ((HashMap) o).get("remove");
                         if(list != null) {
                             if(!list.isEmpty()) {
                                 removableList.setValue(list);
+                            }
+                        }
+                        ArrayList<HashMap> mymap = (ArrayList<HashMap>) ((HashMap) o).get("add");
+                        if(mymap != null) {
+                            if(!mymap.isEmpty()) {
+                                addableList.setValue(mymap);
                             }
                         }
                     }
 
                     @Override
                     public void onError(Throwable e) {
-
+                        Log.e(TAG, "ERRR");
                     }
 
                     @Override
@@ -89,30 +83,12 @@ public class MapViewModel extends ViewModel {
 
                     }
                 });
-        /*
-        ArrayList<Integer> list = markersMainUseCase.removeMarkers();
-        if(list != null) {
-            if(!list.isEmpty()) {
-                removableList.setValue(list);
-            }
-        }
 
-         */
     }
+
 
     public LiveData<ArrayList<Integer>> getRemovableArray() {
         return removableList;
-    }
-
-    //Add
-
-    public void checkAddableMarkers() {
-        ArrayList<HashMap> list = markersMainUseCase.addMarkers();
-        if(list != null) {
-            if(!list.isEmpty()) {
-                addableList.setValue(list);
-            }
-        }
     }
 
     public LiveData<ArrayList<HashMap>> getAddableArray() {

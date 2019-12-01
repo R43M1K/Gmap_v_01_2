@@ -8,10 +8,5 @@ import java.util.HashMap;
 
 public interface ProvideMarkersOperations {
 
-    void checkMarkers();
-
-    ArrayList<HashMap> addMarkers();
-
-    ArrayList<Integer> removeMarkers();
-
+    HashMap checkMarkers();
 }

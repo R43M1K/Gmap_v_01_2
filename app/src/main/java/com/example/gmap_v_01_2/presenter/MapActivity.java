@@ -57,6 +57,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 
+import io.reactivex.Completable;
+import io.reactivex.CompletableEmitter;
+import io.reactivex.CompletableObserver;
+import io.reactivex.CompletableOnSubscribe;
+import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.disposables.Disposable;
+
 public class MapActivity extends AppCompatActivity implements OnMapReadyCallback , UserListFragment.OnFragmentInteractionListener , UserPhotoViewerFragment.OnPhotoFragmentInteractionListener {
 
 
@@ -164,13 +173,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
     //USE THIS METHOD TO GET ALL USERS INFORMATION, THEN ADD MARKERS IN CURRENT AREA
     private void readDocFromFirebase() {
-        mapViewModel.checkAddableMarkers();
         mRunnable = new Runnable() {
             @Override
             public void run() {
                 mapViewModel.checkMarkers();
-                mapViewModel.checkRemovableMarkers();
-                mapViewModel.checkAddableMarkers();
                 iHandler.postDelayed(this, LOCATION_UPDATE_INTERVAL);
             }
         };
