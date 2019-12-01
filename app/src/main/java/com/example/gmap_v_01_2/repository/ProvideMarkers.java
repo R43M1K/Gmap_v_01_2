@@ -42,6 +42,7 @@ public class ProvideMarkers implements ProvideMarkersStateRepo {
         markersPoJo = MarkersPoJo.getInstance();
     }
 
+    //TODO move this method to service
     @Nullable
     @Override
     public ArrayList<Integer> markersToBeRemoved(ArrayList<Markers> markerList, ArrayList<UserDocumentAll> listInBounds) {

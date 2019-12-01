@@ -119,9 +119,11 @@ public class ProvideMarkersOp implements ProvideMarkersOperations {
         markerList = markersPoJo.getMarkerList();
         markersPoJo.setListInBounds(listInBounds);
         //Remove
+        //TODO get removable list from service
         markersPoJo.setRemovableList(checkMarkersUseCase.markersToBeRemoved(markerList, listInBounds));
         removableList = markersPoJo.getRemovableList();
         //Add
+        //TODO get addable list from service
         markersPoJo.setAddableList(checkMarkersUseCase.markersToBeAdded(markerList, listInBounds));
         addableList = markersPoJo.getAddableList();
         firestoreService.updateUser(getUserInfo());

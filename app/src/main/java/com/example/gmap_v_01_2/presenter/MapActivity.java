@@ -70,7 +70,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private GoogleMap mMap;
     private Boolean mLocationPermissionsGranted = false;
     private Handler iHandler = new Handler();
-    private Runnable mRunnable;
     public static String username;
     public static GeoPoint location;
     public static String link;
@@ -165,7 +164,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     //USE THIS METHOD TO GET ALL USERS INFORMATION, THEN ADD MARKERS IN CURRENT AREA
     private void readDocFromFirebase() {
         mapViewModel.checkAddableMarkers();
-        mRunnable = new Runnable() {
+        iHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 mapViewModel.checkMarkers();
@@ -173,48 +172,41 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 mapViewModel.checkAddableMarkers();
                 iHandler.postDelayed(this, LOCATION_UPDATE_INTERVAL);
             }
-        };
-        iHandler.postDelayed(mRunnable, LOCATION_UPDATE_INTERVAL);
+        }, LOCATION_UPDATE_INTERVAL);
         loadMarkers();
     }
 
     private void loadMarkers() {
         if(mapViewModel != null) {
-            mapViewModel.getRemovableArray().observe(this, new Observer<ArrayList<Integer>>() {
-                @Override
-                public void onChanged(ArrayList<Integer> arrayList) {
-                    for (int i = 0; i < arrayList.size(); i++) {
-                        int myIndex = arrayList.get(i);
-                        if (myIndex != 0) {
-                            myIndex--;
-                        }
-                        markersPoJo.getMarkerList().get(myIndex).getMarker().remove();
-                        markersPoJo.getMarkerList().remove(myIndex);
+            mapViewModel.getRemovableArray().observe(this, arrayList -> {
+                for (int i = 0; i < arrayList.size(); i++) {
+                    int myIndex = arrayList.get(i);
+                    if (myIndex != 0) {
+                        myIndex--;
                     }
+                    markersPoJo.getMarkerList().get(myIndex).getMarker().remove();
+                    markersPoJo.getMarkerList().remove(myIndex);
                 }
             });
-            mapViewModel.getAddableArray().observe(this, new Observer<ArrayList<HashMap>>() {
-                @Override
-                public void onChanged(ArrayList<HashMap> hashMaps) {
-                    if (hashMaps != null && !hashMaps.isEmpty() && !hashMaps.contains(null)) {
-                        for (int i = 0; i < hashMaps.size(); i++) {
-                            MarkerOptions markerOptions = (MarkerOptions) hashMaps.get(i).get("markerOptions");
-                            String documentId = (String) hashMaps.get(i).get("documentId");
-                            LatLng latLng = (LatLng) hashMaps.get(i).get("LongLat");
-                            Marker marker = mMap.addMarker(markerOptions);
-                            if ((Boolean) hashMaps.get(i).get("moveCamera")) {
-                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 19f));
-                            }
-                            String markerId = marker.getId();
-                            ArrayList<Markers> markerList = markersPoJo.getMarkerList();
-                            Markers markers = new Markers();
-                            markers.setDocumentId(documentId);
-                            markers.setLatLng(latLng);
-                            markers.setMarker(marker);
-                            markers.setMarkerId(markerId);
-                            markerList.add(markers);
-                            markersPoJo.setMarkerList(markerList);
+            mapViewModel.getAddableArray().observe(this, hashMaps -> {
+                if (hashMaps != null && !hashMaps.isEmpty() && !hashMaps.contains(null)) {
+                    for (int i = 0; i < hashMaps.size(); i++) {
+                        MarkerOptions markerOptions = (MarkerOptions) hashMaps.get(i).get("markerOptions");
+                        String documentId = (String) hashMaps.get(i).get("documentId");
+                        LatLng latLng = (LatLng) hashMaps.get(i).get("LongLat");
+                        Marker marker = mMap.addMarker(markerOptions);
+                        if ((Boolean) hashMaps.get(i).get("moveCamera")) {
+                            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 19f));
                         }
+                        String markerId = marker.getId();
+                        ArrayList<Markers> markerList = markersPoJo.getMarkerList();
+                        Markers markers = new Markers();
+                        markers.setDocumentId(documentId);
+                        markers.setLatLng(latLng);
+                        markers.setMarker(marker);
+                        markers.setMarkerId(markerId);
+                        markerList.add(markers);
+                        markersPoJo.setMarkerList(markerList);
                     }
                 }
             });
@@ -266,20 +258,17 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     //CLICK ON USERLIST BUTTON
     private void openUserList() {
         Button button = findViewById(R.id.userlist);
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Switch aSwitch = findViewById(R.id.visibleSwitch);
-                if(fragment.isAdded()){
-                    FragmentManager fragmentManager = getSupportFragmentManager();
-                    FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-                    fragmentTransaction.remove(fragment);
-                    fragmentTransaction.commit();
-                    aSwitch.setVisibility(View.VISIBLE);
-                }else{
-                    callFragment();
-                    aSwitch.setVisibility(View.GONE);
-                }
+        button.setOnClickListener(v -> {
+            Switch aSwitch = findViewById(R.id.visibleSwitch);
+            if(fragment.isAdded()) {
+                FragmentManager fragmentManager = getSupportFragmentManager();
+                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+                fragmentTransaction.remove(fragment);
+                fragmentTransaction.commit();
+                aSwitch.setVisibility(View.VISIBLE);
+            } else {
+                callFragment();
+                aSwitch.setVisibility(View.GONE);
             }
         });
     }
