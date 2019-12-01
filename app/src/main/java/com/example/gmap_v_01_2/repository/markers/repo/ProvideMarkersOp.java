@@ -3,6 +3,9 @@ package com.example.gmap_v_01_2.repository.markers.repo;
 import android.content.Context;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.example.gmap_v_01_2.repository.model.users.Markers;
 import com.example.gmap_v_01_2.repository.model.users.UserDocumentAll;
 import com.example.gmap_v_01_2.repository.services.firestore.OnUserDocumentReady;
@@ -120,7 +123,8 @@ public class ProvideMarkersOp implements ProvideMarkersOperations {
         //TODO get removable list from service
         markersPoJo.setRemovableList(markerService.markersToBeRemoved(markerList, listInBounds));
         removableList = markersPoJo.getRemovableList();
-        hashMap.put("remove", removeMarkers(markerList, removableList));
+        if (removableList != null && !removableList.isEmpty() && markerList != null && !markerList.isEmpty())
+            hashMap.put("remove", removeMarkers(markerList, removableList));
         //Add
         if(!oneTimeAddableList.isEmpty()) {
             addableList.add(oneTimeAddableList.get(0));
@@ -134,20 +138,17 @@ public class ProvideMarkersOp implements ProvideMarkersOperations {
         return hashMap;
     }
 
-    private ArrayList<Integer> removeMarkers(ArrayList<Markers> markers, ArrayList<Integer> myList) {
+    private ArrayList<Integer> removeMarkers(@NonNull ArrayList<Markers> markers, @NonNull ArrayList<Integer> myList) {
         ArrayList<Integer> result = new ArrayList<>();
-        if(myList != null && !myList.isEmpty()) {
-            if (markers != null && !markers.isEmpty()) {
-                for (int i = 0; i < myList.size(); i++) {
-                    int myIndex = myList.get(i);
-                    result.add(myList.get(i));
-                    markersPoJo.getUserfullpicture().remove(myIndex);
-                    markersPoJo.getUserpictureList().remove(myIndex);
-                    markersPoJo.getUsernameList().remove(myIndex);
-                    markersPoJo.getUserfollowersList().remove(myIndex);
-                }
-            }
+        for (int i = 0; i < myList.size(); i++) {
+            int myIndex = myList.get(i);
+            result.add(myList.get(i));
+            markersPoJo.getUserfullpicture().remove(myIndex);
+            markersPoJo.getUserpictureList().remove(myIndex);
+            markersPoJo.getUsernameList().remove(myIndex);
+            markersPoJo.getUserfollowersList().remove(myIndex);
         }
+
         return result;
     }
 
