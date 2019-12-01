@@ -181,7 +181,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             mapViewModel.getRemovableArray().observe(this, arrayList -> {
                 for (int i = 0; i < arrayList.size(); i++) {
                     int myIndex = arrayList.get(i);
-                    if (myIndex != 0) {
+                    if (myIndex != 0 && i != 0) {
                         myIndex--;
                     }
                     markersPoJo.getMarkerList().get(myIndex).getMarker().remove();

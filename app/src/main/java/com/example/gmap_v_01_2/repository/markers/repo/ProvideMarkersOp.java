@@ -3,13 +3,14 @@ package com.example.gmap_v_01_2.repository.markers.repo;
 import android.content.Context;
 import android.util.Log;
 
-import com.example.gmap_v_01_2.business.CheckMarkersUseCase;
 import com.example.gmap_v_01_2.repository.model.users.Markers;
 import com.example.gmap_v_01_2.repository.model.users.UserDocumentAll;
 import com.example.gmap_v_01_2.repository.services.firestore.OnUserDocumentReady;
 import com.example.gmap_v_01_2.repository.services.firestore.UserFirestoreService;
 import com.example.gmap_v_01_2.repository.services.firestore.UserService;
 import com.example.gmap_v_01_2.repository.services.firestore.model.UserDocument;
+import com.example.gmap_v_01_2.repository.services.markers.MarkerService;
+import com.example.gmap_v_01_2.repository.services.markers.UserMarkersService;
 import com.example.gmap_v_01_2.repository.services.preferencies.DefaultPreferencesService;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.firebase.firestore.GeoPoint;
@@ -25,7 +26,7 @@ public class ProvideMarkersOp implements ProvideMarkersOperations {
     private UserDocumentAll userDocumentAll;
     private DefaultPreferencesService preferences;
     private UserService firestoreService;
-    private CheckMarkersUseCase checkMarkersUseCase;
+    private MarkerService markerService;
     private MarkersPoJo markersPoJo;
     //Constants
     private final String TAG = getClass().toString();
@@ -38,20 +39,15 @@ public class ProvideMarkersOp implements ProvideMarkersOperations {
     private ArrayList<UserDocumentAll> listInBounds = new ArrayList<>();
     private ArrayList<UserDocumentAll> addableList = new ArrayList<>();
     private ArrayList<Integer> removableList = new ArrayList<>();
-    private ArrayList<String> usernameList = new ArrayList<>();
-    private ArrayList<String> userpictureList = new ArrayList<>();
-    private ArrayList<String> userfollowersList = new ArrayList<>();
-    private ArrayList<String> userfullpicture = new ArrayList<>();
 
-
-    public ProvideMarkersOp(Context context, GoogleMap mMap, CheckMarkersUseCase checkMarkersUseCase) {
+    public ProvideMarkersOp(Context context, GoogleMap mMap) {
         this.context = context;
         this.mMap = mMap;
         userDocument = new UserDocument();
         userDocumentAll = new UserDocumentAll();
         preferences = DefaultPreferencesService.getInstance(context);
         firestoreService = UserFirestoreService.getInstance(context);
-        this.checkMarkersUseCase = checkMarkersUseCase;
+        markerService = new UserMarkersService(context);
         markersPoJo = MarkersPoJo.getInstance();
         init();
     }
@@ -120,11 +116,11 @@ public class ProvideMarkersOp implements ProvideMarkersOperations {
         markersPoJo.setListInBounds(listInBounds);
         //Remove
         //TODO get removable list from service
-        markersPoJo.setRemovableList(checkMarkersUseCase.markersToBeRemoved(markerList, listInBounds));
+        markersPoJo.setRemovableList(markerService.markersToBeRemoved(markerList, listInBounds));
         removableList = markersPoJo.getRemovableList();
         //Add
         //TODO get addable list from service
-        markersPoJo.setAddableList(checkMarkersUseCase.markersToBeAdded(markerList, listInBounds));
+        markersPoJo.setAddableList(markerService.markersToBeAdded(markerList, listInBounds));
         addableList = markersPoJo.getAddableList();
         firestoreService.updateUser(getUserInfo());
     }
@@ -162,7 +158,7 @@ public class ProvideMarkersOp implements ProvideMarkersOperations {
                 if(id.equals(preferences.get(DOCUMENT_ID,""))) {
                     moveCamera = true;
                 }
-                result.add(checkMarkersUseCase.addMarker(id, username, link, location, followers, visible, moveCamera));
+                result.add(markerService.addMarker(id, username, link, location, followers, visible, moveCamera));
             }
         }
         return result;
