@@ -7,9 +7,11 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -34,9 +36,9 @@ public class UserListFragment extends Fragment {
 
     private ArrayList<User_Item> useritemsList = new ArrayList<>();
     private MapViewModel mapViewModel;
-    MarkersPoJo markersPoJo;
-
+    private MarkersPoJo markersPoJo;
     private OnFragmentInteractionListener mListener;
+
     public UserListFragment() {
         // Required empty public constructor
     }
@@ -64,6 +66,8 @@ public class UserListFragment extends Fragment {
                 useritemsList.add(new User_Item(userpic.get(i), username.get(i), userfols.get(i)));
         }
 
+        FrameLayout frameLayout = view.findViewById(R.id.front_fragment);
+
         //Initialize RecyclerView
         mRecyclerView = view.findViewById(R.id.recyclerView);
         mRecyclerView.setHasFixedSize(true);
@@ -71,6 +75,19 @@ public class UserListFragment extends Fragment {
         mAdapter = new UserAdapter(useritemsList);
         mRecyclerView.setLayoutManager(mLayoutManager);
         mRecyclerView.setAdapter(mAdapter);
+        ItemTouchHelper.SimpleCallback callback = new ItemTouchHelper.SimpleCallback(0,ItemTouchHelper.LEFT) {
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                mListener.onFragmentInteraction(true, false, 0);
+            }
+        };
+        ItemTouchHelper helper = new ItemTouchHelper(callback);
+        helper.attachToRecyclerView(mRecyclerView);
         mAdapter.setOnItemClickListener(new UserAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(int position) {
@@ -84,6 +101,7 @@ public class UserListFragment extends Fragment {
                 mListener.onFragmentInteraction(false,true,position);
             }
         });
+
 
         mRecyclerView.setOnTouchListener(new OnSwipeTouchListener(this.getContext()) {
             @Override
