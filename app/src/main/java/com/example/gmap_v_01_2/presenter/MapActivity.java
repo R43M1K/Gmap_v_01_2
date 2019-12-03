@@ -111,7 +111,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         userDocument = new UserDocument();
         markersPoJo = MarkersPoJo.getInstance();
         firestoreService = UserFirestoreService.getInstance(getBaseContext());
-        getLocationPermission();
+        initMap();
         startLocationService();
     }
 
@@ -120,42 +120,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private void initMap() {
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         if (mapFragment != null) mapFragment.getMapAsync(MapActivity.this);
-    }
-
-    //CHECK PERMISSION FOR LOCATION GOOGLE MAP
-   private void getLocationPermission() {
-        String[] permissions = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
-        if (ContextCompat.checkSelfPermission(this.getApplicationContext(), FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            if (ContextCompat.checkSelfPermission(this.getApplicationContext(), COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                mLocationPermissionsGranted = true;
-                initMap();
-            } else {
-                ActivityCompat.requestPermissions(this, permissions, LOCATION_PERMISSION_REQUEST_CODE);
-            }
-        } else {
-            ActivityCompat.requestPermissions(this, permissions, LOCATION_PERMISSION_REQUEST_CODE);
-        }
-    }
-
-    //CHECK REQUEST PERMISSION RESULT FOR GOOGLE MAP
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        mLocationPermissionsGranted = false;
-
-        //TODO show dialog to explain user why this app needs this permission to function correctly, and probably re ask for permissions
-        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
-            if (grantResults.length > 0) {
-                for (int grantResult : grantResults) {
-                    if (grantResult != PackageManager.PERMISSION_GRANTED) {
-                        mLocationPermissionsGranted = false;
-                        return;
-                    }
-                }
-                mLocationPermissionsGranted = true;
-                //map can be initialized
-                initMap();
-            }
-        }
     }
 
     @Override

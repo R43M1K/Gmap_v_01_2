@@ -12,8 +12,7 @@
         android:layout_height="match_parent"
         android:id="@+id/map"
         tools:context="Mapp.MapsActivity"
-        android:name="com.google.android.gms.maps.SupportMapFragment"
-        />
+        android:name="com.google.android.gms.maps.SupportMapFragment" />
 
     <FrameLayout
         android:id="@+id/fframe"
@@ -40,7 +39,8 @@
         android:layout_marginTop="5dp"
         android:layout_height="59dp"
         android:layout_alignRight="@id/map"
-        android:tooltipText="Open User List"/>
-        <!--android:background="@drawable/userlist"-->
+        android:tooltipText="Open User List"
+        android:background="@mipmap/userlist"/>
+
 
 </RelativeLayout>
