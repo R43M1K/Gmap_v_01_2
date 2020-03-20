@@ -20,7 +20,7 @@ public class ImageProcessing {
     }
 
     //This method takes users bitmap and remake it with prefered width and height
-    public Bitmap getResizedBitmap(Bitmap bitmap, int followers) {
+    public Bitmap getResizedBitmap(Bitmap bitmap, Long followers) {
 
         int[] PicWidthHeight = followerProcessing.picSizeViaFollower(followers);
         return Bitmap.createScaledBitmap(bitmap,PicWidthHeight[0],PicWidthHeight[1], false);

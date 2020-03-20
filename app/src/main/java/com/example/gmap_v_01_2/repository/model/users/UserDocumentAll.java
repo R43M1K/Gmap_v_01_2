@@ -8,8 +8,12 @@ public class UserDocumentAll {
     private String username;
     private GeoPoint location;
     private String picture;
-    private int followers;
-    private boolean visible;
+    private Long followers;
+    private boolean isprivate;
+    private boolean isverified;
+    private Long userid;
+    private String token;
+    private boolean isvisible;
 
     public UserDocumentAll() {
     }
@@ -22,20 +26,20 @@ public class UserDocumentAll {
         this.documentid = documentid;
     }
 
-    public int getFollowers() {
+    public Long getFollowers() {
         return followers;
     }
 
-    public void setFollowers(int followers) {
+    public void setFollowers(Long followers) {
         this.followers = followers;
     }
 
-    public boolean getVisible() {
-        return visible;
+    public boolean getIsvisible() {
+        return isvisible;
     }
 
-    public void setVisible(boolean visible) {
-        this.visible = visible;
+    public void setIsvisible(boolean isvisible) {
+        this.isvisible = isvisible;
     }
 
     public String getPicture() {
@@ -60,5 +64,37 @@ public class UserDocumentAll {
 
     public void setLocation(GeoPoint location) {
         this.location = location;
+    }
+
+    public boolean getIsprivate() {
+        return isprivate;
+    }
+
+    public void setIsprivate(boolean isprivate) {
+        this.isprivate = isprivate;
+    }
+
+    public boolean getIsverified() {
+        return isverified;
+    }
+
+    public void setIsverified(boolean isverified) {
+        this.isverified = isverified;
+    }
+
+    public Long getUserid() {
+        return userid;
+    }
+
+    public void setUserid(Long userid) {
+        this.userid = userid;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
     }
 }

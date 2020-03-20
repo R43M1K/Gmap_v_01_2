@@ -1,12 +1,9 @@
 package com.example.gmap_v_01_2.presenter;
 
 
-import android.Manifest;
 import android.app.ActivityManager;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.nfc.Tag;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -16,68 +13,43 @@ import android.widget.Button;
 import android.widget.Switch;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.example.gmap_v_01_2.R;
-import com.example.gmap_v_01_2.editor.FollowerProcessing;
-import com.example.gmap_v_01_2.editor.ImageProcessing;
-import com.example.gmap_v_01_2.editor.ImageURLProcessing;
 import com.example.gmap_v_01_2.presenter.fragments.UserListFragment;
 import com.example.gmap_v_01_2.presenter.fragments.UserPhotoViewerFragment;
 import com.example.gmap_v_01_2.repository.markers.repo.MarkersPoJo;
 import com.example.gmap_v_01_2.repository.model.users.Markers;
-import com.example.gmap_v_01_2.repository.model.users.UserDocumentAll;
-import com.example.gmap_v_01_2.repository.services.firestore.OnUserDocumentReady;
 import com.example.gmap_v_01_2.repository.services.firestore.UserFirestoreService;
 import com.example.gmap_v_01_2.repository.services.firestore.UserService;
 import com.example.gmap_v_01_2.repository.services.location.LocationService;
 import com.example.gmap_v_01_2.repository.services.firestore.model.UserDocument;
 import com.example.gmap_v_01_2.repository.services.preferencies.DefaultPreferencesService;
-import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.firestore.GeoPoint;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.concurrent.ExecutionException;
-
-import io.reactivex.Completable;
-import io.reactivex.CompletableEmitter;
-import io.reactivex.CompletableObserver;
-import io.reactivex.CompletableOnSubscribe;
-import io.reactivex.Observable;
-import io.reactivex.ObservableEmitter;
-import io.reactivex.ObservableOnSubscribe;
-import io.reactivex.disposables.Disposable;
 
 public class MapActivity extends AppCompatActivity implements OnMapReadyCallback , UserListFragment.OnFragmentInteractionListener , UserPhotoViewerFragment.OnPhotoFragmentInteractionListener {
 
-
-    private static final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
-    private static final String COARSE_LOCATION = Manifest.permission.ACCESS_COARSE_LOCATION;
-    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1234;
+    //Constants
     private static final int LOCATION_UPDATE_INTERVAL = 2000;
     private final String TAG = getClass().toString();
 
     //vars
     private GoogleMap mMap;
-    private Boolean mLocationPermissionsGranted = false;
     private Handler iHandler = new Handler();
     public static String username;
     public static GeoPoint location;
@@ -90,12 +62,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private final String SHARED_USERNAME = "Username";
     private final String VISIBLE = "Visible";
 
-    //classes
+    //Classes
     Fragment fragment = new UserListFragment();
     Fragment photoFragment = new UserPhotoViewerFragment();
     DefaultPreferencesService defaultPreferencesService;
     UserService firestoreService;
-    UserDocument userDocument;
     MarkersPoJo markersPoJo;
 
     private ViewModelProviderFactory factory;
@@ -108,7 +79,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         setContentView(R.layout.activity_map);
 
         defaultPreferencesService = DefaultPreferencesService.getInstance(getBaseContext());
-        userDocument = new UserDocument();
         markersPoJo = MarkersPoJo.getInstance();
         firestoreService = UserFirestoreService.getInstance(getBaseContext());
         initMap();

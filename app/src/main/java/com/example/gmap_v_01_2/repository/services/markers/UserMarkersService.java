@@ -38,7 +38,6 @@ public class UserMarkersService implements MarkerService {
         markersPoJo = MarkersPoJo.getInstance();
     }
 
-    //TODO move this method to service
     @Nullable
     @Override
     public ArrayList<Integer> markersToBeRemoved(ArrayList<Markers> markerList, ArrayList<UserDocumentAll> listInBounds) {
@@ -51,7 +50,7 @@ public class UserMarkersService implements MarkerService {
                     boolean found = true;
                     for (int j = 0; j < listInBounds.size(); j++) {
                         if (markerList.get(i).getDocumentId().equals(listInBounds.get(j).getDocumentid())) {
-                            if (listInBounds.get(j).getVisible()) {
+                            if (listInBounds.get(j).getIsvisible()) {
                                 double longitude = markerList.get(i).getLatLng().longitude;
                                 double latitude = markerList.get(i).getLatLng().latitude;
                                 if (longitude == listInBounds.get(j).getLocation().getLongitude() && latitude == listInBounds.get(j).getLocation().getLatitude()) {
@@ -110,7 +109,7 @@ public class UserMarkersService implements MarkerService {
                     document.setPicture(listInBounds.get(i).getPicture());
                     document.setLocation(listInBounds.get(i).getLocation());
                     document.setFollowers(listInBounds.get(i).getFollowers());
-                    document.setVisible(listInBounds.get(i).getVisible());
+                    document.setIsvisible(listInBounds.get(i).getIsvisible());
                     list.add(document);
                     Log.d("UserMarkersService", "user added to addable list");
                 }
@@ -122,7 +121,7 @@ public class UserMarkersService implements MarkerService {
 
     //TODO userLocation pojo -> to GeoPoint
     @Override
-    public HashMap addMarker(String documentId, String userName, String userPicture, GeoPoint userLocation, int userFollowers, boolean userVisible, boolean moveCamera) {
+    public HashMap addMarker(String documentId, String userName, String userPicture, GeoPoint userLocation, Long userFollowers, boolean userVisible, boolean moveCamera) {
             if (userVisible) {
                 HashMap markerParams = new HashMap();
                 ImageURLProcessing imageURLProcessing = new ImageURLProcessing();
@@ -146,6 +145,7 @@ public class UserMarkersService implements MarkerService {
                         userLongLat = new LatLng(userLocation.getLatitude(), userLocation.getLongitude());
                     }
                     markerOptions.position(userLongLat);
+                    markerOptions.visible(userVisible);
                     markerOptions.icon(BitmapDescriptorFactory.fromBitmap(roundBitMap));
                     String currentFollowers = followersProcessing.instagramFollowersType(userFollowers);
                     markerOptions.title(userName + " : " + currentFollowers + " Followers");

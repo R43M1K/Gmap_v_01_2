@@ -31,7 +31,6 @@ public class LocationService extends Service {
 
     private FusedLocationProviderClient fusedLocationProviderClient;
     private DefaultPreferencesService defaultPreferencesService;
-    private UserDocument document;
     private static final String SHARED_LONGITUDE = "Longitude";
     private static final String SHARED_LATITUDE = "Latitude";
     private final static long UPDATE_INTERVAL = 4 * 1000; // 4 seconds
@@ -51,7 +50,6 @@ public class LocationService extends Service {
     public void onCreate() {
         super.onCreate();
         defaultPreferencesService = DefaultPreferencesService.getInstance(getApplicationContext());
-        document = new UserDocument();
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         if (Build.VERSION.SDK_INT >= 26) {

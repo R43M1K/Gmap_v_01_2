@@ -13,6 +13,6 @@ public interface MarkerService {
 
     ArrayList<UserDocumentAll> markersToBeAdded(ArrayList<Markers> markerList, ArrayList<UserDocumentAll> listInBounds);
 
-    HashMap addMarker(String documentId, String userName, String userPicture, GeoPoint userLocatoin, int userFollowers, boolean userVisible, boolean moveCamera);
+    HashMap addMarker(String documentId, String userName, String userPicture, GeoPoint userLocatoin, Long userFollowers, boolean userVisible, boolean moveCamera);
 
 }

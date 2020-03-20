@@ -7,30 +7,42 @@ public class UserDocument {
     //WRITE DOCUMENT WITH THIS PARAMETERS IN THIS CLASS. LATER USE THIS CLASS GETTERS TO READ DATA
 
     private String username;
+
     private GeoPoint location;
+
     private String picture;
-    private int followers;
-    private boolean visible;
+
+    private boolean isprivate;
+
+    private boolean isverified;
+
+    private Long followers;
+
+    private boolean isVisible;
+
+    private Long userId;
+
+    private String token;
 
     public UserDocument() {
 
     }
 
 
-    public int getFollowers() {
+    public Long getFollowers() {
         return followers;
     }
 
-    public void setFollowers(int followers) {
+    public void setFollowers(Long followers) {
         this.followers = followers;
     }
 
     public boolean getVisible() {
-        return visible;
+        return isVisible;
     }
 
     public void setVisible(boolean visible) {
-        this.visible = visible;
+        this.isVisible = visible;
     }
 
     public String getPicture() {
@@ -56,4 +68,41 @@ public class UserDocument {
     public void setLocation(GeoPoint location) {
         this.location = location;
     }
+
+    public boolean getIsprivate() {
+        return isprivate;
+    }
+
+    public void setIsprivate(boolean isprivate) {
+        this.isprivate = isprivate;
+    }
+
+    public boolean getIsverified() {
+        return isverified;
+    }
+
+    public void setIsverified(boolean isverified) {
+        this.isverified = isverified;
+    }
+
+    public boolean getIsVisible() {
+        return isVisible;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+
 }

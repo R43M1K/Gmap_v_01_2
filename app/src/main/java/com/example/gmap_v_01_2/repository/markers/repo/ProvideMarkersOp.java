@@ -4,7 +4,6 @@ import android.content.Context;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import com.example.gmap_v_01_2.repository.model.users.Markers;
 import com.example.gmap_v_01_2.repository.model.users.UserDocumentAll;
@@ -57,7 +56,7 @@ public class ProvideMarkersOp implements ProvideMarkersOperations {
     }
 
     private void init() {
-        //Find user , if user not found create user in firebase
+        //Find user by Id (from shared pref) , if user not found create user in firebase
         firestoreService.findUserById(new OnUserDocumentReady() {
             @Override
             public void onReady(UserDocument document) {
@@ -83,22 +82,30 @@ public class ProvideMarkersOp implements ProvideMarkersOperations {
         String username = getUserInfo().getUsername();
         String link = getUserInfo().getPicture();
         GeoPoint location = getUserInfo().getLocation();
-        int followers = getUserInfo().getFollowers();
-        boolean visible = getUserInfo().getVisible();
+        Long followers = getUserInfo().getFollowers();
+        boolean isvisible = getUserInfo().getVisible();
+        boolean isprivate = getUserInfo().getIsprivate();
+        boolean isverified = getUserInfo().getIsverified();
+        Long userid = getUserInfo().getUserId();
+        String token = getUserInfo().getToken();
         //Add current user to ListInBounds
         userDocumentAll.setDocumentid(id);
         userDocumentAll.setUsername(username);
         userDocumentAll.setPicture(link);
         userDocumentAll.setLocation(location);
         userDocumentAll.setFollowers(followers);
-        userDocumentAll.setVisible(visible);
+        userDocumentAll.setIsvisible(isvisible);
+        userDocumentAll.setIsprivate(isprivate);
+        userDocumentAll.setIsverified(isverified);
+        userDocumentAll.setUserid(userid);
+        userDocumentAll.setToken(token);
         oneTimeAddableList.add(userDocumentAll);
     }
 
     private UserDocument getUserInfo() {
         userDocument.setUsername("Razmik1993");
         userDocument.setPicture("https://image.freepik.com/free-vector/abstract-dynamic-pattern-wallpaper-vector_53876-59131.jpg");
-        userDocument.setFollowers(5478);
+        userDocument.setFollowers(5478L);
 
         String longitudePrefs = preferences.get(SHARED_LONGITUDE, "");
         longitudePrefs = longitudePrefs == null || longitudePrefs.isEmpty()? "0": longitudePrefs;
@@ -163,8 +170,8 @@ public class ProvideMarkersOp implements ProvideMarkersOperations {
                 String link = mylist.get(i).getPicture();
                 String username = mylist.get(i).getUsername();
                 GeoPoint location = mylist.get(i).getLocation();
-                int followers = mylist.get(i).getFollowers();
-                boolean visible = mylist.get(i).getVisible();
+                Long followers = mylist.get(i).getFollowers();
+                boolean visible = mylist.get(i).getIsvisible();
                 boolean moveCamera = false;
                 if(id.equals(preferences.get(DOCUMENT_ID,""))) {
                     moveCamera = true;

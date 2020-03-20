@@ -3,7 +3,7 @@ package com.example.gmap_v_01_2.editor;
 public class FollowerProcessing {
 
     // WRITE FOLLOWERS AS INSTAGRAM TYPE DOES
-    public String instagramFollowersType(int followers){
+    public String instagramFollowersType(Long followers){
 
         String instaFollowers;
         String followersS = String.valueOf(followers);
@@ -37,7 +37,7 @@ public class FollowerProcessing {
 
     // RESIZE USER IMAGE DEPENDING ON AMOUNT OF INSTAGRAM FOLLOWERS
     //TODO String.format
-    public int[] picSizeViaFollower(int followers){
+    public int[] picSizeViaFollower(Long followers){
 
         int[] userPicWidthHeight = {110,150};
 
