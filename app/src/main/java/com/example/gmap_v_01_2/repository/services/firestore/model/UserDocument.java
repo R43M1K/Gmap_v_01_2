@@ -18,9 +18,9 @@ public class UserDocument {
 
     private Long followers;
 
-    private boolean isVisible;
+    private boolean isvisible;
 
-    private Long userId;
+    private Long userid;
 
     private String token;
 
@@ -37,12 +37,12 @@ public class UserDocument {
         this.followers = followers;
     }
 
-    public boolean getVisible() {
-        return isVisible;
+    public boolean getIsvisible() {
+        return isvisible;
     }
 
-    public void setVisible(boolean visible) {
-        this.isVisible = visible;
+    public void setIsvisible(boolean isvisible) {
+        this.isvisible = isvisible;
     }
 
     public String getPicture() {
@@ -85,16 +85,12 @@ public class UserDocument {
         this.isverified = isverified;
     }
 
-    public boolean getIsVisible() {
-        return isVisible;
+    public Long getUserid() {
+        return userid;
     }
 
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
+    public void setUserid(Long userid) {
+        this.userid = userid;
     }
 
     public String getToken() {

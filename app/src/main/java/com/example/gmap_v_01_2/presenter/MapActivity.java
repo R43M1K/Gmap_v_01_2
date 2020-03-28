@@ -226,9 +226,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
 
     //FRAGMENT INTERACTION VIA THIS METHOD
-    // This method is connectivity between activity and fragment
+    // This method is connectivity between activity and frontMapFragment
     // Boolean bool here is read from onFragmentInteraction method defined in UserListFragment
-    // bool indicates that in our case Swipe action (from right to left) is used, so we can remove fragment, and show switch button again
+    // bool indicates that in our case Swipe action (from right to left) is used, so we can remove frontMapFragment, and show switch button again
     @Override
     public void onFragmentInteraction(Boolean bool,Boolean openPhotoFragment,int pos) {
         Switch aSwitch = findViewById(R.id.visibleSwitch);

@@ -1,6 +1,7 @@
 package com.example.gmap_v_01_2.presenter.fragments;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -13,9 +14,12 @@ import android.webkit.WebViewClient;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Observer;
 
 import com.example.gmap_v_01_2.R;
 import com.example.gmap_v_01_2.instagram.api.InstagramPlaceHolderApi;
+import com.example.gmap_v_01_2.presenter.MainActivity;
+import com.example.gmap_v_01_2.presenter.MapActivity;
 import com.example.gmap_v_01_2.repository.services.firestore.UserFirestoreService;
 import com.example.gmap_v_01_2.repository.services.instagram.InstagramApi;
 import com.example.gmap_v_01_2.repository.services.preferencies.DefaultPreferencesService;
@@ -83,6 +87,26 @@ public class InstagramLoaderFragment extends Fragment {
 
         webView.loadUrl(authorizeUrl);
 
+        instagramApi.getUserInfoSuccessLiveData().observe(this, new Observer<Boolean>() {
+            @Override
+            public void onChanged(Boolean aBoolean) {
+                if (aBoolean) {
+                    openMapActivity();
+                }else{
+                    try {
+                        throw new Exception("Error loading instagram user data");
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+
         return view;
+    }
+
+    private void openMapActivity() {
+        Intent intent = new Intent(this.getActivity(),MapActivity.class);
+        startActivity(intent);
     }
 }

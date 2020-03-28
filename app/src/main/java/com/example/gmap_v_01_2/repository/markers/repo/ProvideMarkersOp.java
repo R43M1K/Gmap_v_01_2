@@ -52,73 +52,44 @@ public class ProvideMarkersOp implements ProvideMarkersOperations {
         firestoreService = UserFirestoreService.getInstance(context);
         markerService = new UserMarkersService(context);
         markersPoJo = MarkersPoJo.getInstance();
-        init();
+        addUserAsMarker();
     }
 
-    private void init() {
-        //Find user by Id (from shared pref) , if user not found create user in firebase
+    private void addUserAsMarker() {
+        //Add created user info to MarkersPoJo
         firestoreService.findUserById(new OnUserDocumentReady() {
             @Override
-            public void onReady(UserDocument document) {
-                if(document == null) {
-                    firestoreService.addUser(userDocument);
-                }else{
-                    Log.d(TAG, "User found");
+            public void onReady(UserDocument userDocument) {
+                if(userDocument != null && userDocument.getUserid().equals(preferences.get("user_id",0L))) {
+                    String id = preferences.get(DOCUMENT_ID, "");
+                    //Add current user to ListInBounds
+                    userDocumentAll.setDocumentid(id);
+                    userDocumentAll.setUsername(userDocument.getUsername());
+                    userDocumentAll.setPicture(userDocument.getPicture());
+                    userDocumentAll.setLocation(userDocument.getLocation());
+                    userDocumentAll.setFollowers(userDocument.getFollowers());
+                    userDocumentAll.setIsvisible(userDocument.getIsvisible());
+                    userDocumentAll.setIsprivate(userDocument.getIsprivate());
+                    userDocumentAll.setIsverified(userDocument.getIsverified());
+                    userDocumentAll.setUserid(userDocument.getUserid());
+                    userDocumentAll.setToken(userDocument.getToken());
+                    oneTimeAddableList.add(userDocumentAll);
                 }
             }
 
             @Override
             public void onFail() {
-                firestoreService.addUser(userDocument);
+
             }
 
             @Override
             public void onFail(Throwable cause) {
-                firestoreService.addUser(userDocument);
+
             }
         });
-        //Add created user info to MarkersPoJo
-        String id = preferences.get(DOCUMENT_ID, "");
-        String username = getUserInfo().getUsername();
-        String link = getUserInfo().getPicture();
-        GeoPoint location = getUserInfo().getLocation();
-        Long followers = getUserInfo().getFollowers();
-        boolean isvisible = getUserInfo().getVisible();
-        boolean isprivate = getUserInfo().getIsprivate();
-        boolean isverified = getUserInfo().getIsverified();
-        Long userid = getUserInfo().getUserId();
-        String token = getUserInfo().getToken();
-        //Add current user to ListInBounds
-        userDocumentAll.setDocumentid(id);
-        userDocumentAll.setUsername(username);
-        userDocumentAll.setPicture(link);
-        userDocumentAll.setLocation(location);
-        userDocumentAll.setFollowers(followers);
-        userDocumentAll.setIsvisible(isvisible);
-        userDocumentAll.setIsprivate(isprivate);
-        userDocumentAll.setIsverified(isverified);
-        userDocumentAll.setUserid(userid);
-        userDocumentAll.setToken(token);
-        oneTimeAddableList.add(userDocumentAll);
+
     }
 
-    private UserDocument getUserInfo() {
-        userDocument.setUsername("Razmik1993");
-        userDocument.setPicture("https://image.freepik.com/free-vector/abstract-dynamic-pattern-wallpaper-vector_53876-59131.jpg");
-        userDocument.setFollowers(5478L);
-
-        String longitudePrefs = preferences.get(SHARED_LONGITUDE, "");
-        longitudePrefs = longitudePrefs == null || longitudePrefs.isEmpty()? "0": longitudePrefs;
-        double longitude = Double.valueOf(longitudePrefs);
-
-        String latitudePrefs = preferences.get(SHARED_LATITUDE, "");
-        latitudePrefs = latitudePrefs == null || latitudePrefs.isEmpty()? "0": latitudePrefs;
-        double latitude = Double.valueOf(latitudePrefs);
-
-        userDocument.setVisible(preferences.get(VISIBLE, true));
-        userDocument.setLocation(new GeoPoint(latitude, longitude));
-        return userDocument;
-    }
 
     @Override
     public HashMap checkMarkers() {
@@ -141,8 +112,23 @@ public class ProvideMarkersOp implements ProvideMarkersOperations {
             addableList = markersPoJo.getAddableList();
         }
         hashMap.put("add", addMarkers(addableList));
-        firestoreService.updateUser(getUserInfo());
+        firestoreService.updateUser(updateCurrentMarker(userDocument));
         return hashMap;
+    }
+
+    private UserDocument updateCurrentMarker(UserDocument userDocument) {
+        double longitude = Double.valueOf(preferences.get(SHARED_LONGITUDE,""));
+        double latitude = Double.valueOf(preferences.get(SHARED_LATITUDE,""));
+        userDocument.setUsername(userDocumentAll.getUsername());
+        userDocument.setFollowers(userDocumentAll.getFollowers());
+        userDocument.setPicture(userDocumentAll.getPicture());
+        userDocument.setIsvisible(userDocumentAll.getIsvisible());
+        userDocument.setIsprivate(userDocumentAll.getIsprivate());
+        userDocument.setIsverified(userDocumentAll.getIsverified());
+        userDocument.setUserid(userDocumentAll.getUserid());
+        userDocument.setToken(userDocumentAll.getToken());
+        userDocument.setLocation(new GeoPoint(latitude,longitude));
+        return userDocument;
     }
 
     private ArrayList<Integer> removeMarkers(@NonNull ArrayList<Markers> markers, @NonNull ArrayList<Integer> myList) {

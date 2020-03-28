@@ -57,14 +57,14 @@ public class UserFirestoreService implements UserService {
         user.put("location", userDocument.getLocation());
         user.put("picture", userDocument.getPicture());
         user.put("followers", userDocument.getFollowers());
-        user.put("isvisible", userDocument.getVisible());
+        user.put("isvisible", userDocument.getIsvisible());
         user.put("isprivate", userDocument.getIsprivate());
         user.put("isverified", userDocument.getIsverified());
         user.put("token", userDocument.getToken());
-        user.put("userid", userDocument.getUserId());
+        user.put("userid", userDocument.getUserid());
         firestore.collection(TABLE_NAME).add(user).addOnSuccessListener(documentReference -> {
             preferences.put(SHARED_DOCUMENT_ID, documentReference.getId());
-            Log.d(TAG, "User added to Firebase");
+            Log.d(TAG, "User added to Firebase with document ID + " + documentReference.getId());
         });
     }
 
@@ -75,11 +75,11 @@ public class UserFirestoreService implements UserService {
         user.put("location", userDocument.getLocation());
         user.put("picture", userDocument.getPicture());
         user.put("followers", userDocument.getFollowers());
-        user.put("isvisible", userDocument.getVisible());
+        user.put("isvisible", userDocument.getIsvisible());
         user.put("isprivate", userDocument.getIsprivate());
         user.put("isverified", userDocument.getIsverified());
         user.put("token", userDocument.getToken());
-        user.put("userid", userDocument.getUserId());
+        user.put("userid", userDocument.getUserid());
 
         String documentPath = preferences.get(SHARED_DOCUMENT_ID,"");
 

@@ -19,12 +19,16 @@ import android.widget.Toast;
 
 import com.example.gmap_v_01_2.R;
 import com.example.gmap_v_01_2.presenter.fragments.FrontMapFragment;
+import com.example.gmap_v_01_2.presenter.fragments.InstagramLoaderFragment;
 import com.google.android.gms.location.FusedLocationProviderClient;
+
+import java.util.ArrayList;
 
 
 public class MainActivity extends AppCompatActivity implements FrontMapFragment.OnFragmentInteractionListener {
 
-    Fragment fragment = new FrontMapFragment();
+    Fragment frontMapFragment = new FrontMapFragment();
+    Fragment instagramLoaderFragment = new InstagramLoaderFragment();
 
     //PERMISSIONS
     final int PERMISSION_REQUEST_ENABLE_GPS = 9000;
@@ -55,27 +59,17 @@ public class MainActivity extends AppCompatActivity implements FrontMapFragment.
 
         mainViewModel.getConnectionsStateLiveData().observe(this, state -> {
             if(state) {
-                Intent intent = new Intent(MainActivity.this, MapActivity.class);
-                startActivity(intent);
+                addInstagramLoaderFragment();
             } else {
-                callFragment();
+                addFrontMapFragment();
             }
         });
 
         mainViewModel.getConnectionsStateOnFragmentInteractLiveData().observe(this, state -> {
             if(state) {
-                //TODO move to Fragment navigation controller
-                FragmentManager fragmentManager = getSupportFragmentManager();
-                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-                fragmentTransaction.hide(fragment);
-                fragmentTransaction.addToBackStack(null);
-                fragmentTransaction.commit();
-
-                //TODO move to Activity navigation controller
-                Intent intent = new Intent(MainActivity.this, MapActivity.class);
-                startActivity(intent);
+                replaceWithInstagramLoaderFragment();
             } else {
-                callFragment();
+                addFrontMapFragment();
             }
         });
 
@@ -133,15 +127,17 @@ public class MainActivity extends AppCompatActivity implements FrontMapFragment.
     }
 
 
-    //ADD FRAGMENT TO ACTIVITY
-    private void callFragment(){
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.setCustomAnimations(R.anim.fade_in,R.anim.fade_out);
-        fragmentTransaction.add(R.id.fragframe, fragment);
-        fragmentTransaction.addToBackStack(null);
-        fragmentTransaction.commit();
+    //ADD FRONT MAP FRAGMENT TO ACTIVITY (WITH REFRESH BUTTON)
+    private void addFrontMapFragment(){
+        FragmentNavigationController.addFragmentWithAnimation(R.id.fragframe, frontMapFragment,null,R.anim.fade_in,R.anim.fade_out, getSupportFragmentManager());
+    }
 
+    private void addInstagramLoaderFragment() {
+        FragmentNavigationController.addFragment(R.id.fragframe, instagramLoaderFragment, null, getSupportFragmentManager());
+    }
+
+    private void replaceWithInstagramLoaderFragment() {
+        FragmentNavigationController.replaceFragment(R.id.fragframe, instagramLoaderFragment, getSupportFragmentManager());
     }
 
     //THIS METHOD INDICATES THAT BUTTON OF FRAGMENT IS PRESSED

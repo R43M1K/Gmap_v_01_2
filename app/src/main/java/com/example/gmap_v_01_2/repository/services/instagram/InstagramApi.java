@@ -3,11 +3,14 @@ package com.example.gmap_v_01_2.repository.services.instagram;
 
 import android.util.Log;
 
+import androidx.lifecycle.MutableLiveData;
+
 import com.example.gmap_v_01_2.instagram.api.InstagramPlaceHolderApi;
 import com.example.gmap_v_01_2.repository.model.instagram.UserInfo;
 import com.example.gmap_v_01_2.repository.model.instagram.UserToken;
 import com.example.gmap_v_01_2.repository.model.instagram.UserTokenLong;
 import com.example.gmap_v_01_2.repository.model.instagram.personal.ObjectResponse;
+import com.example.gmap_v_01_2.repository.services.firestore.OnUserDocumentReady;
 import com.example.gmap_v_01_2.repository.services.firestore.UserFirestoreService;
 import com.example.gmap_v_01_2.repository.services.firestore.model.UserDocument;
 import com.example.gmap_v_01_2.repository.services.preferencies.DefaultPreferencesService;
@@ -23,6 +26,8 @@ public class InstagramApi {
     private final String TAG = getClass().toString();
     private final String SHARED_LONGITUDE = "Longitude";
     private final String SHARED_LATITUDE = "Latitude";
+
+    private MutableLiveData<Boolean> userInfoSuccessLiveData = new MutableLiveData<>();
 
     private Long userID;
     private String longToken;
@@ -169,21 +174,46 @@ public class InstagramApi {
                 userDocument.setPicture(profilePicUrlHD);
                 userDocument.setIsprivate(false);
                 userDocument.setIsverified(false);
-                userDocument.setVisible(true);
-                userDocument.setUserId(userID);
+                userDocument.setIsvisible(true);
+                userDocument.setUserid(userID);
                 userDocument.setToken(longToken);
-                userFirestoreService.addUser(userDocument);
+                userFirestoreService.findUserById(new OnUserDocumentReady() {
+                    @Override
+                    public void onReady(UserDocument userDocumentChecked) {
+                        if(userDocumentChecked == null) {
+                            userFirestoreService.addUser(userDocument);
+                        }else if(userDocumentChecked.getUserid().equals(userDocument.getUserid())){
+                            userFirestoreService.updateUser(userDocument);
+                        }
+                    }
+
+                    @Override
+                    public void onFail() {
+                        userFirestoreService.addUser(userDocument);
+                    }
+
+                    @Override
+                    public void onFail(Throwable cause) {
+                        userFirestoreService.addUser(userDocument);
+                    }
+                });
 
                 defaultPreferencesService.put("user_id",userID);
                 defaultPreferencesService.put("access_token", longToken);
 
+                userInfoSuccessLiveData.setValue(true);
             }
 
             @Override
             public void onFailure(Call<ObjectResponse> call, Throwable t) {
+                userInfoSuccessLiveData.setValue(false);
                 Log.d(TAG, t.getMessage());
             }
         });
+    }
+
+    public MutableLiveData<Boolean> getUserInfoSuccessLiveData() {
+        return userInfoSuccessLiveData;
     }
 
 }
