@@ -122,7 +122,7 @@ public class ProvideMarkersOp implements ProvideMarkersOperations {
         userDocument.setUsername(userDocumentAll.getUsername());
         userDocument.setFollowers(userDocumentAll.getFollowers());
         userDocument.setPicture(userDocumentAll.getPicture());
-        userDocument.setIsvisible(userDocumentAll.getIsvisible());
+        userDocument.setIsvisible(Boolean.valueOf(preferences.get(VISIBLE,true)));
         userDocument.setIsprivate(userDocumentAll.getIsprivate());
         userDocument.setIsverified(userDocumentAll.getIsverified());
         userDocument.setUserid(userDocumentAll.getUserid());
